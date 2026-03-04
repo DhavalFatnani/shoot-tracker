@@ -127,17 +127,17 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
 }
 
 export default async function DashboardPage() {
-  const session = await getSession();
-  const role = session?.role ?? "SHOOT_USER";
+  let session = null;
   let kpis: DashboardKpis | null = null;
   try {
+    session = await getSession();
     const kpisResult = await getDashboardKpis();
     kpis = kpisResult.success ? kpisResult.data : null;
   } catch {
-    // KPIs are non-critical; render dashboard with null counts
+    // Layout already validated session; if page-level fetch fails, render with fallbacks
   }
+  const role = session?.role ?? "SHOOT_USER";
   const cards = buildCards(role, kpis);
-
   const greeting = session?.email ? session.email.split("@")[0] : "there";
   const roleLabel = role === "OPS_USER" ? "Ops" : role === "SHOOT_USER" ? "Shoot" : "Admin";
 

@@ -15,13 +15,13 @@ export interface SessionUser {
 }
 
 export async function getSession(): Promise<SessionUser | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
+  let user: { id: string; email?: string | null } | null = null;
   try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+    if (!user) return null;
+
     const db = getDb();
     const [profile, teamIds] = await Promise.all([
       profileById(db, user.id),
@@ -52,13 +52,16 @@ export async function getSession(): Promise<SessionUser | null> {
       opsWarehouseIds,
     };
   } catch {
-    return {
-      id: user.id,
-      email: user.email ?? undefined,
-      role: "SHOOT_USER" as Role,
-      teamIds: [],
-      shootTeamIds: [],
-      opsWarehouseIds: [],
-    };
+    if (user) {
+      return {
+        id: user.id,
+        email: user.email ?? undefined,
+        role: "SHOOT_USER" as Role,
+        teamIds: [],
+        shootTeamIds: [],
+        opsWarehouseIds: [],
+      };
+    }
+    return null;
   }
 }

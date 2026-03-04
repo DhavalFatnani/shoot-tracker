@@ -231,10 +231,15 @@
         "app/(dashboard)/admin/teams/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fteam-actions.ts%22%2C%5B%5B%22002ee92dbe835ec8ca24e159838f93fb919a0f6e0f%22%2C%22adminListWarehouses%22%5D%2C%5B%220037f75bd12f97fa6c03dcb0ef8966f7256a24c24b%22%2C%22adminListTeams%22%5D%2C%5B%22401cc0349dab05030b3641b31b78180b4f3213c482%22%2C%22adminDeleteTeam%22%5D%2C%5B%22403f1ee1e7d410bdebae9ea3e6b98090f1432ab819%22%2C%22adminListTeamMembers%22%5D%2C%5B%2240ece081cb8cd21109d9273a78c55839bd1459cdea%22%2C%22adminCreateTeam%22%5D%2C%5B%22601a2e44a2ff988304effdc2f35808006755c0e777%22%2C%22adminRemoveTeamMember%22%5D%2C%5B%22601d0188f55df6c79832e656045584f735d494c758%22%2C%22adminUpdateTeam%22%5D%2C%5B%22607e5954f8e7ec396ffcbb835c7840d7f9775f4053%22%2C%22adminAddTeamMember%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(auth)/sign-in/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
-        "app/(dashboard)/admin/teams/page": "action-browser"
+        "app/(dashboard)/admin/teams/page": "action-browser",
+        "app/(auth)/sign-in/page": "action-browser"
       }
     },
     "4015ae029184af4eabc654ff8cd73d8024e95d02bb": {
@@ -242,10 +247,15 @@
         "app/(dashboard)/admin/teams/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fteam-actions.ts%22%2C%5B%5B%22002ee92dbe835ec8ca24e159838f93fb919a0f6e0f%22%2C%22adminListWarehouses%22%5D%2C%5B%220037f75bd12f97fa6c03dcb0ef8966f7256a24c24b%22%2C%22adminListTeams%22%5D%2C%5B%22401cc0349dab05030b3641b31b78180b4f3213c482%22%2C%22adminDeleteTeam%22%5D%2C%5B%22403f1ee1e7d410bdebae9ea3e6b98090f1432ab819%22%2C%22adminListTeamMembers%22%5D%2C%5B%2240ece081cb8cd21109d9273a78c55839bd1459cdea%22%2C%22adminCreateTeam%22%5D%2C%5B%22601a2e44a2ff988304effdc2f35808006755c0e777%22%2C%22adminRemoveTeamMember%22%5D%2C%5B%22601d0188f55df6c79832e656045584f735d494c758%22%2C%22adminUpdateTeam%22%5D%2C%5B%22607e5954f8e7ec396ffcbb835c7840d7f9775f4053%22%2C%22adminAddTeamMember%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(auth)/sign-in/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
-        "app/(dashboard)/admin/teams/page": "action-browser"
+        "app/(dashboard)/admin/teams/page": "action-browser",
+        "app/(auth)/sign-in/page": "action-browser"
       }
     },
     "40741a40e2cedcd619354a9a0339f42b95ef32bbaf": {
@@ -253,10 +263,15 @@
         "app/(dashboard)/admin/teams/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fteam-actions.ts%22%2C%5B%5B%22002ee92dbe835ec8ca24e159838f93fb919a0f6e0f%22%2C%22adminListWarehouses%22%5D%2C%5B%220037f75bd12f97fa6c03dcb0ef8966f7256a24c24b%22%2C%22adminListTeams%22%5D%2C%5B%22401cc0349dab05030b3641b31b78180b4f3213c482%22%2C%22adminDeleteTeam%22%5D%2C%5B%22403f1ee1e7d410bdebae9ea3e6b98090f1432ab819%22%2C%22adminListTeamMembers%22%5D%2C%5B%2240ece081cb8cd21109d9273a78c55839bd1459cdea%22%2C%22adminCreateTeam%22%5D%2C%5B%22601a2e44a2ff988304effdc2f35808006755c0e777%22%2C%22adminRemoveTeamMember%22%5D%2C%5B%22601d0188f55df6c79832e656045584f735d494c758%22%2C%22adminUpdateTeam%22%5D%2C%5B%22607e5954f8e7ec396ffcbb835c7840d7f9775f4053%22%2C%22adminAddTeamMember%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(auth)/sign-in/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
-        "app/(dashboard)/admin/teams/page": "action-browser"
+        "app/(dashboard)/admin/teams/page": "action-browser",
+        "app/(auth)/sign-in/page": "action-browser"
       }
     },
     "407aa27837cd37dbb00c3a5e5ad06d222a554877e9": {
@@ -264,10 +279,15 @@
         "app/(dashboard)/admin/teams/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fteam-actions.ts%22%2C%5B%5B%22002ee92dbe835ec8ca24e159838f93fb919a0f6e0f%22%2C%22adminListWarehouses%22%5D%2C%5B%220037f75bd12f97fa6c03dcb0ef8966f7256a24c24b%22%2C%22adminListTeams%22%5D%2C%5B%22401cc0349dab05030b3641b31b78180b4f3213c482%22%2C%22adminDeleteTeam%22%5D%2C%5B%22403f1ee1e7d410bdebae9ea3e6b98090f1432ab819%22%2C%22adminListTeamMembers%22%5D%2C%5B%2240ece081cb8cd21109d9273a78c55839bd1459cdea%22%2C%22adminCreateTeam%22%5D%2C%5B%22601a2e44a2ff988304effdc2f35808006755c0e777%22%2C%22adminRemoveTeamMember%22%5D%2C%5B%22601d0188f55df6c79832e656045584f735d494c758%22%2C%22adminUpdateTeam%22%5D%2C%5B%22607e5954f8e7ec396ffcbb835c7840d7f9775f4053%22%2C%22adminAddTeamMember%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(auth)/sign-in/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
-        "app/(dashboard)/admin/teams/page": "action-browser"
+        "app/(dashboard)/admin/teams/page": "action-browser",
+        "app/(auth)/sign-in/page": "action-browser"
       }
     },
     "408d6de5283433070f25037daba086ddc548adf58e": {
@@ -275,10 +295,15 @@
         "app/(dashboard)/admin/teams/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fteam-actions.ts%22%2C%5B%5B%22002ee92dbe835ec8ca24e159838f93fb919a0f6e0f%22%2C%22adminListWarehouses%22%5D%2C%5B%220037f75bd12f97fa6c03dcb0ef8966f7256a24c24b%22%2C%22adminListTeams%22%5D%2C%5B%22401cc0349dab05030b3641b31b78180b4f3213c482%22%2C%22adminDeleteTeam%22%5D%2C%5B%22403f1ee1e7d410bdebae9ea3e6b98090f1432ab819%22%2C%22adminListTeamMembers%22%5D%2C%5B%2240ece081cb8cd21109d9273a78c55839bd1459cdea%22%2C%22adminCreateTeam%22%5D%2C%5B%22601a2e44a2ff988304effdc2f35808006755c0e777%22%2C%22adminRemoveTeamMember%22%5D%2C%5B%22601d0188f55df6c79832e656045584f735d494c758%22%2C%22adminUpdateTeam%22%5D%2C%5B%22607e5954f8e7ec396ffcbb835c7840d7f9775f4053%22%2C%22adminAddTeamMember%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(auth)/sign-in/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
-        "app/(dashboard)/admin/teams/page": "action-browser"
+        "app/(dashboard)/admin/teams/page": "action-browser",
+        "app/(auth)/sign-in/page": "action-browser"
       }
     },
     "60bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29": {
@@ -286,10 +311,15 @@
         "app/(dashboard)/admin/teams/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fteam-actions.ts%22%2C%5B%5B%22002ee92dbe835ec8ca24e159838f93fb919a0f6e0f%22%2C%22adminListWarehouses%22%5D%2C%5B%220037f75bd12f97fa6c03dcb0ef8966f7256a24c24b%22%2C%22adminListTeams%22%5D%2C%5B%22401cc0349dab05030b3641b31b78180b4f3213c482%22%2C%22adminDeleteTeam%22%5D%2C%5B%22403f1ee1e7d410bdebae9ea3e6b98090f1432ab819%22%2C%22adminListTeamMembers%22%5D%2C%5B%2240ece081cb8cd21109d9273a78c55839bd1459cdea%22%2C%22adminCreateTeam%22%5D%2C%5B%22601a2e44a2ff988304effdc2f35808006755c0e777%22%2C%22adminRemoveTeamMember%22%5D%2C%5B%22601d0188f55df6c79832e656045584f735d494c758%22%2C%22adminUpdateTeam%22%5D%2C%5B%22607e5954f8e7ec396ffcbb835c7840d7f9775f4053%22%2C%22adminAddTeamMember%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(auth)/sign-in/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
-        "app/(dashboard)/admin/teams/page": "action-browser"
+        "app/(dashboard)/admin/teams/page": "action-browser",
+        "app/(auth)/sign-in/page": "action-browser"
       }
     },
     "4006810182ae28700d55d7badca83a41269399140b": {
