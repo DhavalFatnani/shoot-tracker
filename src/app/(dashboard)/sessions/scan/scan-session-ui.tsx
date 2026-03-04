@@ -46,6 +46,9 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
   const scanningRef = useRef(false);
   /** Max ms between key events to treat as scanner (not human typing). Barcode scanners are typically <10ms. */
   const SCANNER_THRESHOLD_MS = 20;
+  /** Serial numbers are exactly 10 digits. */
+  const SERIAL_LENGTH = 10;
+  const SERIAL_DIGITS_ONLY = /^\d{10}$/;
 
   function handleStartSession() {
     setMessage(null);
@@ -65,10 +68,15 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
 
   function handleAddScan() {
     if (!sessionId || !scanInput.trim()) return;
+    const serial = scanInput.trim();
+    if (!SERIAL_DIGITS_ONLY.test(serial)) {
+      toast("Serial must be exactly 10 digits.", { variant: "error" });
+      return;
+    }
     setMessage(null);
     const formData = new FormData();
     formData.set("sessionId", sessionId);
-    formData.set("serialId", scanInput.trim());
+    formData.set("serialId", serial);
     startTransition(async () => {
       const result = await addScan(formData);
       if (result.success && result.data) {
@@ -79,7 +87,7 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
           prevLenRef.current = 0;
           scanningRef.current = false;
         } else {
-          setItems((prev) => [...prev, { sessionId, serialId: scanInput.trim(), scanStatus: result.data!.scanStatus ?? "OK", errorReason: result.data?.errorReason ?? null }]);
+          setItems((prev) => [...prev, { sessionId, serialId: serial, scanStatus: result.data!.scanStatus ?? "OK", errorReason: result.data?.errorReason ?? null }]);
           setScanInput("");
           prevLenRef.current = 0;
           scanningRef.current = false;
@@ -132,7 +140,10 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
 
   function onScanInput(e: React.ChangeEvent<HTMLInputElement>) {
     const el = e.currentTarget;
-    const newVal = el.value;
+    // Serial is 10 digits only: strip non-digits and cap length
+    const raw = el.value.replace(/\D/g, "").slice(0, SERIAL_LENGTH);
+    if (el.value !== raw) el.value = raw;
+    const newVal = raw;
     const now = Date.now();
     const prevLen = prevLenRef.current;
     const delta = newVal.length - prevLen;
@@ -237,7 +248,7 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
                   toast("Use scanner only; typing and paste are not allowed.", { variant: "error" });
                 }}
                 onCopy={(e) => e.preventDefault()}
-                placeholder="Scan serial (scanner only)"
+                placeholder="Scan 10-digit serial (scanner only)"
                 autoComplete="off"
                 autoFocus
                 className="flex-1 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
@@ -245,7 +256,7 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
               <button
                 type="button"
                 onClick={handleAddScan}
-                disabled={pending || !scanInput.trim()}
+                disabled={pending || !scanInput.trim() || !SERIAL_DIGITS_ONLY.test(scanInput.trim())}
                 className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
               >
                 Add
