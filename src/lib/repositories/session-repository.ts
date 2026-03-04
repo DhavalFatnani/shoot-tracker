@@ -1,0 +1,56 @@
+import { eq, and, desc } from "drizzle-orm";
+import type { SessionType, Location } from "@/lib/validations";
+import type { Database, Tx } from "@/lib/db/client";
+import { sessions, sessionItems } from "@/lib/db/schema";
+
+export async function sessionById(db: Database | Tx, sessionId: string) {
+  const rows = await db.select().from(sessions).where(eq(sessions.id, sessionId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export function openSessionsByTaskId(db: Database | Tx, taskId: string) {
+  return db.select().from(sessions).where(and(eq(sessions.taskId, taskId), eq(sessions.status, "OPEN")));
+}
+
+export async function createSession(
+  tx: Tx,
+  row: {
+    taskId: string;
+    type: SessionType;
+    fromLocation: Location;
+    toLocation: Location;
+    startedBy: string;
+    returnId?: string | null;
+  }
+) {
+  const [s] = await tx.insert(sessions).values(row).returning({ id: sessions.id });
+  return s!.id;
+}
+
+export async function commitSession(tx: Tx, sessionId: string) {
+  await tx
+    .update(sessions)
+    .set({ status: "COMMITTED", committedAt: new Date() })
+    .where(eq(sessions.id, sessionId));
+}
+
+export async function cancelSession(tx: Tx, sessionId: string) {
+  await tx.update(sessions).set({ status: "CANCELLED" }).where(eq(sessions.id, sessionId));
+}
+
+export function openSessionIdsContainingSerial(db: Database | Tx, serialId: string) {
+  return db
+    .selectDistinct({ sessionId: sessions.id })
+    .from(sessions)
+    .innerJoin(sessionItems, eq(sessions.id, sessionItems.sessionId))
+    .where(and(eq(sessions.status, "OPEN"), eq(sessionItems.serialId, serialId)));
+}
+
+/** Committed sessions for a task (for task timeline). */
+export function committedSessionsByTaskId(db: Database | Tx, taskId: string) {
+  return db
+    .select({ id: sessions.id, type: sessions.type, committedAt: sessions.committedAt })
+    .from(sessions)
+    .where(and(eq(sessions.taskId, taskId), eq(sessions.status, "COMMITTED")))
+    .orderBy(desc(sessions.committedAt));
+}

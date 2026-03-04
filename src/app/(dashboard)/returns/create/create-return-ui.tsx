@@ -1,0 +1,512 @@
+"use client";
+
+import { useState, useTransition, useMemo } from "react";
+import { commitReturn, getShootInventory } from "@/app/actions/return-actions";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import * as Dialog from "@radix-ui/react-dialog";
+import { formatTaskSerial } from "@/lib/format-serials";
+
+type InventoryItem = {
+  taskId: string;
+  taskSerial: number;
+  taskName: string | null;
+  serialId: string;
+  sku: string;
+  currentLocation: string;
+  status: string;
+  receivedAt: string | Date | null;
+};
+
+type ScanEntry = {
+  serialId: string;
+  ok: boolean;
+  error?: string;
+  taskId?: string;
+  taskSerial?: number;
+  taskName?: string | null;
+  sku?: string;
+};
+
+function formatAgingFromReceived(receivedAt: string | Date | null): string {
+  if (!receivedAt) return "—";
+  const received = typeof receivedAt === "string" ? new Date(receivedAt) : receivedAt;
+  const now = new Date();
+  const days = Math.floor((now.getTime() - received.getTime()) / (24 * 60 * 60 * 1000));
+  if (days < 0) return "—";
+  if (days === 0) return "< 1 day";
+  if (days === 1) return "1 day";
+  return `${days} days`;
+}
+
+export function CreateReturnUI({ initialInventory }: { initialInventory: InventoryItem[] }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [phase, setPhase] = useState<"inventory" | "scan" | "done">("inventory");
+  const [scanInput, setScanInput] = useState("");
+  const [scanned, setScanned] = useState<ScanEntry[]>([]);
+  const [filter, setFilter] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ returnId?: string; totalReturned: number; summary: { taskId: string; taskName: string | null; taskSerial: number; count: number }[] } | null>(null);
+  const [partialConfirmOpen, setPartialConfirmOpen] = useState(false);
+
+  const inventoryMap = useMemo(
+    () => new Map(inventory.map((i) => [i.serialId, i])),
+    [inventory]
+  );
+
+  const byTask = useMemo(() => {
+    const map = new Map<string, { taskName: string | null; taskSerial: number; items: InventoryItem[] }>();
+    for (const item of inventory) {
+      const existing = map.get(item.taskId);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        map.set(item.taskId, { taskName: item.taskName, taskSerial: item.taskSerial, items: [item] });
+      }
+    }
+    return map;
+  }, [inventory]);
+
+  const filteredInventory = useMemo(() => {
+    if (!filter.trim()) return inventory;
+    const q = filter.toLowerCase();
+    return inventory.filter(
+      (i) =>
+        i.serialId.toLowerCase().includes(q) ||
+        i.sku.toLowerCase().includes(q) ||
+        (i.taskName ?? "").toLowerCase().includes(q)
+    );
+  }, [inventory, filter]);
+
+  const scannedSet = useMemo(
+    () => new Set(scanned.filter((s) => s.ok).map((s) => s.serialId)),
+    [scanned]
+  );
+
+  const scannedByTask = useMemo(() => {
+    const map = new Map<string, { taskName: string | null; taskSerial: number; serials: string[] }>();
+    for (const s of scanned) {
+      if (!s.ok || !s.taskId || s.taskSerial == null) continue;
+      const existing = map.get(s.taskId);
+      if (existing) {
+        existing.serials.push(s.serialId);
+      } else {
+        map.set(s.taskId, { taskName: s.taskName ?? null, taskSerial: s.taskSerial, serials: [s.serialId] });
+      }
+    }
+    return map;
+  }, [scanned]);
+
+  /** Tasks where we're returning only some serials (partial return). Key = taskId, value = { taskName, taskSerial, notReturning } */
+  const partialReturnByTask = useMemo(() => {
+    const map = new Map<string, { taskName: string | null; taskSerial: number; notReturning: InventoryItem[] }>();
+    for (const [taskId, { taskName, taskSerial, items }] of byTask.entries()) {
+      const returningCount = scannedByTask.get(taskId)?.serials.length ?? 0;
+      if (returningCount > 0 && returningCount < items.length) {
+        const notReturning = items.filter((i) => !scannedSet.has(i.serialId));
+        map.set(taskId, { taskName, taskSerial, notReturning });
+      }
+    }
+    return map;
+  }, [byTask, scannedByTask, scannedSet]);
+
+  const handleScan = () => {
+    const serialId = scanInput.trim();
+    if (!serialId) return;
+    setScanInput("");
+
+    if (scannedSet.has(serialId)) {
+      setScanned((prev) => [...prev, { serialId, ok: false, error: "Already scanned" }]);
+      return;
+    }
+
+    const item = inventoryMap.get(serialId);
+    if (!item) {
+      setScanned((prev) => [...prev, { serialId, ok: false, error: "Not in shoot inventory" }]);
+      return;
+    }
+
+    setScanned((prev) => [
+      ...prev,
+      { serialId, ok: true, taskId: item.taskId, taskSerial: item.taskSerial, taskName: item.taskName, sku: item.sku },
+    ]);
+  };
+
+  const handleRemoveScan = (serialId: string) => {
+    setScanned((prev) => prev.filter((s) => s.serialId !== serialId));
+  };
+
+  const doCommit = () => {
+    const validSerials = scanned.filter((s) => s.ok).map((s) => s.serialId);
+    if (validSerials.length === 0) return;
+
+    setError(null);
+    setPartialConfirmOpen(false);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("serialIds", JSON.stringify(validSerials));
+      const res = await commitReturn(fd);
+      if (res.success && res.data) {
+        setResult(res.data);
+        setPhase("done");
+      } else {
+        setError(res.error ?? "Failed to create return");
+      }
+    });
+  };
+
+  const handleCommit = () => {
+    const validSerials = scanned.filter((s) => s.ok).map((s) => s.serialId);
+    if (validSerials.length === 0) return;
+
+    if (partialReturnByTask.size > 0) {
+      setPartialConfirmOpen(true);
+      return;
+    }
+    doCommit();
+  };
+
+  const handleRefreshInventory = () => {
+    startTransition(async () => {
+      const res = await getShootInventory();
+      if (res.success && res.data) {
+        setInventory(res.data);
+      }
+    });
+  };
+
+  const okCount = scanned.filter((s) => s.ok).length;
+  const errCount = scanned.filter((s) => !s.ok).length;
+
+  if (phase === "done" && result) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+            </svg>
+            <h2 className="text-lg font-semibold text-emerald-800">Return created</h2>
+          </div>
+          <p className="text-sm text-emerald-700">
+            {result.totalReturned} serial{result.totalReturned !== 1 ? "s" : ""} moved to buffer across {result.summary.length} task{result.summary.length !== 1 ? "s" : ""}.
+          </p>
+          <div className="mt-4 space-y-2">
+            {result.summary.map((s) => (
+              <div key={s.taskId} className="flex items-center gap-3 rounded-lg bg-white/70 px-4 py-2.5">
+                <span className="text-sm font-medium text-slate-900">{s.taskName ?? formatTaskSerial(s.taskSerial)}</span>
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+                  {s.count} serial{s.count !== 1 ? "s" : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-xs text-emerald-600">
+            OPS team will verify these returns via Return Verify sessions on each task.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {result.returnId && (
+            <Link
+              href={`/returns/${result.returnId}`}
+              className="rounded-lg bg-slate-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-700 transition dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-slate-300"
+            >
+              View return
+            </Link>
+          )}
+          <button
+            onClick={() => { setPhase("inventory"); setScanned([]); setResult(null); handleRefreshInventory(); }}
+            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition"
+          >
+            Create another return
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Inventory summary */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Shoot Team Inventory
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {inventory.length} serial{inventory.length !== 1 ? "s" : ""} across {byTask.size} task{byTask.size !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefreshInventory}
+              disabled={pending}
+              className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-200 disabled:opacity-50 transition"
+            >
+              Refresh
+            </button>
+            {phase === "inventory" && inventory.length > 0 && (
+              <button
+                onClick={() => setPhase("scan")}
+                className="rounded-md bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 transition"
+              >
+                Start Scanning
+              </button>
+            )}
+          </div>
+        </div>
+
+        {inventory.length === 0 ? (
+          <div className="py-8 text-center">
+            <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <p className="mt-2 text-sm text-slate-500">No serials currently with the shoot team.</p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-3">
+              <input
+                type="text"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder="Filter by serial, SKU, or task..."
+                className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-100"
+              />
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 border-b border-slate-100 bg-slate-50/90">
+                  <tr>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Serial</th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">SKU</th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Task</th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Location</th>
+                    <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Aging (from received)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredInventory.map((item) => (
+                    <tr
+                      key={`${item.taskId}-${item.serialId}`}
+                      className={`transition-colors ${scannedSet.has(item.serialId) ? "bg-emerald-50/50 opacity-60" : "hover:bg-slate-50/50"}`}
+                    >
+                      <td className="px-4 py-2 font-mono text-xs text-slate-700">
+                        {item.serialId}
+                        {scannedSet.has(item.serialId) && (
+                          <span className="ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">scanned</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-slate-600">{item.sku}</td>
+                      <td className="px-4 py-2 text-xs text-slate-500">{item.taskName ?? formatTaskSerial(item.taskSerial)}</td>
+                      <td className="px-4 py-2">
+                        <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                          {item.currentLocation}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-xs text-slate-600">
+                        {formatAgingFromReceived(item.receivedAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Scan phase */}
+      {phase === "scan" && (
+        <>
+          <div className="rounded-xl border border-indigo-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-slate-900">Scan serials to return</h3>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={scanInput}
+                onChange={(e) => setScanInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleScan();
+                  }
+                }}
+                placeholder="Scan or enter serial ID"
+                autoFocus
+                className="flex-1 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+              <button
+                onClick={handleScan}
+                disabled={pending || !scanInput.trim()}
+                className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+          {/* Scanned items list */}
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Scanned ({scanned.length})
+              </h3>
+              <div className="flex items-center gap-3 text-xs">
+                {okCount > 0 && <span className="text-emerald-600">{okCount} OK</span>}
+                {errCount > 0 && <span className="text-red-600">{errCount} errors</span>}
+              </div>
+            </div>
+
+            {scanned.length === 0 ? (
+              <p className="px-5 py-8 text-center text-sm text-slate-400">
+                No items scanned yet. Enter a serial ID above.
+              </p>
+            ) : (
+              <ul className="max-h-64 divide-y divide-slate-100 overflow-y-auto">
+                {scanned.map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-3 px-5 py-2.5">
+                    <span className={`inline-flex h-2 w-2 rounded-full ${item.ok ? "bg-emerald-500" : "bg-red-500"}`} />
+                    <span className="font-mono text-xs text-slate-700">{item.serialId}</span>
+                    {item.ok && item.sku && (
+                      <span className="text-xs text-slate-400">{item.sku}</span>
+                    )}
+                    {item.ok && item.taskName && (
+                      <span className="text-xs text-slate-400">({item.taskName})</span>
+                    )}
+                    {!item.ok && item.error && (
+                      <span className="text-xs text-red-600">{item.error}</span>
+                    )}
+                    {item.ok && (
+                      <button
+                        onClick={() => handleRemoveScan(item.serialId)}
+                        className="ml-auto text-xs text-slate-400 hover:text-red-500 transition"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Summary by task */}
+          {scannedByTask.size > 0 && (
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold text-slate-900">Return summary by task</h3>
+              <div className="space-y-2">
+                {Array.from(scannedByTask.entries()).map(([taskId, { taskName, taskSerial, serials }]) => (
+                  <div key={taskId} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-2.5">
+                    <span className="text-sm text-slate-700">{taskName ?? formatTaskSerial(taskSerial)}</span>
+                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                      {serials.length} serial{serials.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCommit}
+              disabled={pending || okCount === 0}
+              className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+            >
+              {pending ? "Submitting..." : `Commit Return (${okCount} serial${okCount !== 1 ? "s" : ""})`}
+            </button>
+            <button
+              onClick={() => { setPhase("inventory"); setScanned([]); setError(null); }}
+              disabled={pending}
+              className="rounded-lg bg-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-300 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {/* Partial return confirmation: detailed modal */}
+          <Dialog.Root open={partialConfirmOpen} onOpenChange={setPartialConfirmOpen}>
+            <Dialog.DialogPortal>
+              <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/50 dark:bg-slate-950/60" />
+              <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-lg max-h-[85vh] translate-x-[-50%] translate-y-[-50%] flex flex-col rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-600 dark:bg-slate-800">
+                <div className="p-6 pb-4 flex-shrink-0">
+                  <Dialog.Title className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    Partial return
+                  </Dialog.Title>
+                  <Dialog.Description className="sr-only">
+                    Confirm which serials will not be returned and will stay with you for future use.
+                  </Dialog.Description>
+                  <p className="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+                    The following serials are not included in this return. They will remain with you for future shoots or other use.
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    {Array.from(partialReturnByTask.values()).reduce((n, { notReturning }) => n + notReturning.length, 0)} serials across {partialReturnByTask.size} task{partialReturnByTask.size !== 1 ? "s" : ""} will stay with you
+                  </p>
+                </div>
+                <div className="px-6 overflow-y-auto flex-1 min-h-0 space-y-4">
+                  {Array.from(partialReturnByTask.entries()).map(([taskId, { taskName, taskSerial, notReturning }]) => (
+                    <div
+                      key={taskId}
+                      className="rounded-lg border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-600 dark:bg-slate-700/50"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="font-medium text-slate-900 dark:text-slate-100">
+                          {taskName ?? formatTaskSerial(taskSerial)}
+                        </span>
+                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                          {notReturning.length} not returned
+                        </span>
+                      </div>
+                      <ul className="flex flex-wrap gap-1.5">
+                        {notReturning.map((item) => (
+                          <li
+                            key={item.serialId}
+                            className="font-mono text-xs px-2 py-1 rounded bg-white border border-slate-200 text-slate-700 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
+                          >
+                            {item.serialId}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-6 pt-4 flex-shrink-0 border-t border-slate-100 dark:border-slate-600 flex justify-end gap-3">
+                  <Dialog.Close asChild>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                    >
+                      Back
+                    </button>
+                  </Dialog.Close>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await doCommit();
+                      setPartialConfirmOpen(false);
+                    }}
+                    disabled={pending}
+                    className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+                  >
+                    {pending ? "Submitting…" : "Confirm partial return"}
+                  </button>
+                </div>
+              </Dialog.Content>
+            </Dialog.DialogPortal>
+          </Dialog.Root>
+        </>
+      )}
+    </div>
+  );
+}

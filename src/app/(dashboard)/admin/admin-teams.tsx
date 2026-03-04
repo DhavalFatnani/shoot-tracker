@@ -1,0 +1,390 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import {
+  adminListTeams,
+  adminListWarehouses,
+  adminCreateTeam,
+  adminUpdateTeam,
+  adminDeleteTeam,
+  adminListTeamMembers,
+  adminAddTeamMember,
+  adminRemoveTeamMember,
+  type TeamType,
+} from "@/app/actions/team-actions";
+import { adminListUsers } from "@/app/actions/auth-actions";
+import { useToast } from "@/components/ui/toaster";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
+type Team = { id: string; name: string; type: string; warehouseId: string | null; createdAt: Date };
+type Warehouse = { id: string; code: string; name: string };
+type UserRow = { id: string; email: string; role: string };
+
+const TEAM_TYPES: { value: TeamType; label: string }[] = [
+  { value: "SHOOT", label: "Shoot" },
+  { value: "OPS", label: "Ops" },
+];
+
+export function AdminTeams() {
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [name, setName] = useState("");
+  const [type, setType] = useState<TeamType>("SHOOT");
+  const [warehouseId, setWarehouseId] = useState<string>("");
+  const [creating, setCreating] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editType, setEditType] = useState<TeamType>("SHOOT");
+  const [editWarehouseId, setEditWarehouseId] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [memberTeamId, setMemberTeamId] = useState<string | null>(null);
+  const [memberUserIds, setMemberUserIds] = useState<string[]>([]);
+  const [addUserId, setAddUserId] = useState("");
+  const [addingMember, setAddingMember] = useState(false);
+
+  const { toast } = useToast();
+
+  const fetchTeams = useCallback(async () => {
+    const res = await adminListTeams();
+    if (res.error) setError(res.error);
+    else setTeams(res.teams as Team[]);
+  }, []);
+
+  const fetchWarehouses = useCallback(async () => {
+    const res = await adminListWarehouses();
+    if (res.error) return;
+    setWarehouses(res.warehouses as Warehouse[]);
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    const res = await adminListUsers();
+    if (res.error) return;
+    setUsers(res.users);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([fetchTeams(), fetchWarehouses(), fetchUsers()]).finally(() =>
+      setLoading(false)
+    );
+  }, [fetchTeams, fetchWarehouses, fetchUsers]);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setCreating(true);
+    const res = await adminCreateTeam({
+      name: name.trim(),
+      type,
+      warehouseId: warehouseId || null,
+    });
+    setCreating(false);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    toast("Team created", { variant: "success" });
+    setName("");
+    setType("SHOOT");
+    setWarehouseId("");
+    fetchTeams();
+  }
+
+  function startEdit(t: Team) {
+    setEditingId(t.id);
+    setEditName(t.name);
+    setEditType(t.type as TeamType);
+    setEditWarehouseId(t.warehouseId ?? "");
+  }
+
+  async function handleSaveEdit() {
+    if (!editingId) return;
+    setSaving(true);
+    const res = await adminUpdateTeam(editingId, {
+      name: editName.trim(),
+      type: editType,
+      warehouseId: editWarehouseId || null,
+    });
+    setSaving(false);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    toast("Team updated", { variant: "success" });
+    setEditingId(null);
+    fetchTeams();
+  }
+
+  async function openMembers(teamId: string) {
+    setMemberTeamId(teamId);
+    const res = await adminListTeamMembers(teamId);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    setMemberUserIds(res.userIds);
+    setAddUserId("");
+  }
+
+  async function handleAddMember() {
+    if (!memberTeamId || !addUserId) return;
+    setAddingMember(true);
+    const res = await adminAddTeamMember(memberTeamId, addUserId);
+    setAddingMember(false);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    toast("Member added", { variant: "success" });
+    setMemberUserIds((prev) => [...prev, addUserId]);
+    setAddUserId("");
+  }
+
+  async function handleRemoveMember(userId: string) {
+    if (!memberTeamId) return;
+    const res = await adminRemoveTeamMember(memberTeamId, userId);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    toast("Member removed", { variant: "success" });
+    setMemberUserIds((prev) => prev.filter((id) => id !== userId));
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const res = await adminDeleteTeam(deleteTarget.id);
+    setDeleting(false);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    toast(`Team ${deleteTarget.name} deleted`, { variant: "success" });
+    setDeleteTarget(null);
+    fetchTeams();
+  }
+
+  const warehouseName = (id: string | null) =>
+    id ? warehouses.find((w) => w.id === id)?.name ?? "—" : "—";
+  const userEmail = (id: string) => users.find((u) => u.id === id)?.email ?? "—";
+  const availableToAdd = users.filter((u) => !memberUserIds.includes(u.id));
+
+  const cardClass = "rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80";
+  const inputClass = "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
+  const labelClass = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400";
+  const btnPrimary = "rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60 dark:focus:ring-offset-zinc-800";
+  const btnSecondary = "rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700";
+  const btnDanger = "rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50";
+
+  return (
+    <div className="space-y-6">
+      <div className={`${cardClass} p-6`}>
+        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">Create team</h2>
+        <form onSubmit={handleCreate} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="flex-1 min-w-0">
+            <label className={labelClass}>Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Team name"
+              required
+              className={inputClass}
+            />
+          </div>
+          <div className="w-32">
+            <label className={labelClass}>Type</label>
+            <select value={type} onChange={(e) => setType(e.target.value as TeamType)} className={inputClass}>
+              {TEAM_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="w-48">
+            <label className={labelClass}>Warehouse (optional)</label>
+            <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className={inputClass}>
+              <option value="">—</option>
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>{w.name}</option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" disabled={creating} className={btnPrimary}>
+            {creating ? "Creating…" : "Create team"}
+          </button>
+        </form>
+      </div>
+
+      <div className={`overflow-hidden ${cardClass}`}>
+        <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
+          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Teams ({teams.length})</h2>
+        </div>
+        {error && (
+          <div className="mx-5 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+            {error}
+          </div>
+        )}
+        {loading ? (
+          <p className="px-5 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
+        ) : teams.length === 0 ? (
+          <p className="px-5 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">No teams yet. Create one above.</p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
+                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Name</th>
+                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Type</th>
+                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Warehouse</th>
+                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
+              {teams.map((t) => (
+                <tr key={t.id} className="transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50">
+                  <td className="px-5 py-3.5">
+                    {editingId === t.id ? (
+                      <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="max-w-xs rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                    ) : (
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{t.name}</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {editingId === t.id ? (
+                      <select value={editType} onChange={(e) => setEditType(e.target.value as TeamType)} className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100">
+                        {TEAM_TYPES.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-zinc-700 dark:text-zinc-300">{t.type}</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {editingId === t.id ? (
+                      <select value={editWarehouseId} onChange={(e) => setEditWarehouseId(e.target.value)} className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100">
+                        <option value="">—</option>
+                        {warehouses.map((w) => (
+                          <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="text-zinc-500 dark:text-zinc-400">{warehouseName(t.warehouseId)}</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {editingId === t.id ? (
+                      <div className="flex gap-2">
+                        <button type="button" onClick={handleSaveEdit} disabled={saving} className={btnPrimary}>
+                          Save
+                        </button>
+                        <button type="button" onClick={() => setEditingId(null)} className={btnSecondary}>
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => openMembers(t.id)} className={btnSecondary}>
+                          Members
+                        </button>
+                        <button type="button" onClick={() => startEdit(t)} className={btnSecondary}>
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => setDeleteTarget({ id: t.id, name: t.name })} className={btnDanger}>
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {memberTeamId && (
+        <>
+          <div className="fixed inset-0 z-40 bg-zinc-900/50" aria-hidden onClick={() => setMemberTeamId(null)} />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Team members</h3>
+              <button
+                type="button"
+                onClick={() => setMemberTeamId(null)}
+                className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <ul className="mb-4 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-600">
+              {memberUserIds.length === 0 ? (
+                <li className="px-3 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">No members yet.</li>
+              ) : (
+                memberUserIds.map((userId) => (
+                  <li key={userId} className="flex items-center justify-between border-b border-zinc-100 px-3 py-2 last:border-0 dark:border-zinc-700">
+                    <span className="text-sm text-zinc-900 dark:text-zinc-100">{userEmail(userId)}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMember(userId)}
+                      className="rounded-lg bg-red-100 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+            <div className="flex gap-2">
+              <select
+                value={addUserId}
+                onChange={(e) => setAddUserId(e.target.value)}
+                className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              >
+                <option value="">Add user…</option>
+                {availableToAdd.map((u) => (
+                  <option key={u.id} value={u.id}>{u.email}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleAddMember}
+                disabled={!addUserId || addingMember}
+                className={btnPrimary}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete team"
+        description={
+          deleteTarget
+            ? `Delete team "${deleteTarget.name}"? This will remove all member assignments. Tasks linked to this team may be affected.`
+            : ""
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+      />
+    </div>
+  );
+}

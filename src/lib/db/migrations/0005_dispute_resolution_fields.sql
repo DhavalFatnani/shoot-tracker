@@ -1,0 +1,3 @@
+ALTER TABLE disputes ADD COLUMN IF NOT EXISTS resolution_comment VARCHAR(2048);
+ALTER TABLE disputes ADD COLUMN IF NOT EXISTS resolution_photo_url VARCHAR(1024);
+ALTER TABLE disputes ADD COLUMN IF NOT EXISTS resolved_by UUID;
