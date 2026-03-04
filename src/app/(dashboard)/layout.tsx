@@ -9,7 +9,12 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  let session;
+  try {
+    session = await getSession();
+  } catch {
+    redirect("/sign-in?message=Something+went+wrong.+Please+sign+in+again.");
+  }
   if (!session) redirect("/sign-in?message=Session+expired.+Please+sign+in+again.");
 
   async function signOut() {

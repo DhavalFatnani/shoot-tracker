@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
-import { getDashboardKpis } from "@/app/actions/dashboard-actions";
+import { getDashboardKpis, type DashboardKpis } from "@/app/actions/dashboard-actions";
 
 type CardDef = { title: string; subtitle: string; href: string; icon: string; color: string; highlight?: boolean };
 
@@ -129,8 +129,13 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
 export default async function DashboardPage() {
   const session = await getSession();
   const role = session?.role ?? "SHOOT_USER";
-  const kpisResult = await getDashboardKpis();
-  const kpis = kpisResult.success ? kpisResult.data : null;
+  let kpis: DashboardKpis | null = null;
+  try {
+    const kpisResult = await getDashboardKpis();
+    kpis = kpisResult.success ? kpisResult.data : null;
+  } catch {
+    // KPIs are non-critical; render dashboard with null counts
+  }
   const cards = buildCards(role, kpis);
 
   const greeting = session?.email ? session.email.split("@")[0] : "there";

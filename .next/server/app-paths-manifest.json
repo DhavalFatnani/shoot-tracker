@@ -1,8 +1,7 @@
 {
-  "/(dashboard)/serials/timeline/page": "app/(dashboard)/serials/timeline/page.js",
-  "/(dashboard)/profile/page": "app/(dashboard)/profile/page.js",
-  "/(dashboard)/returns/create/page": "app/(dashboard)/returns/create/page.js",
-  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
   "/(dashboard)/tasks/[id]/page": "app/(dashboard)/tasks/[id]/page.js",
-  "/(dashboard)/tasks/page": "app/(dashboard)/tasks/page.js"
+  "/(dashboard)/profile/page": "app/(dashboard)/profile/page.js",
+  "/(dashboard)/tasks/page": "app/(dashboard)/tasks/page.js",
+  "/(dashboard)/returns/create/page": "app/(dashboard)/returns/create/page.js",
+  "/(dashboard)/serials/timeline/page": "app/(dashboard)/serials/timeline/page.js"
 }
