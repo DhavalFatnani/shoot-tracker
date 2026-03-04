@@ -21,15 +21,15 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/loading.js"
     ],
-    "/(dashboard)/dashboard/page": [
+    "/(dashboard)/admin/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/dashboard/page.js"
+      "static/chunks/app/(dashboard)/admin/layout.js"
     ],
-    "/(dashboard)/buffer-aging/page": [
+    "/(dashboard)/admin/teams/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/buffer-aging/page.js"
+      "static/chunks/app/(dashboard)/admin/teams/page.js"
     ],
     "/(dashboard)/tasks/error": [
       "static/chunks/webpack.js",
@@ -46,45 +46,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/tasks/page.js"
     ],
-    "/(dashboard)/profile/error": [
+    "/(dashboard)/sessions/scan/error": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/profile/error.js"
+      "static/chunks/app/(dashboard)/sessions/scan/error.js"
     ],
-    "/(dashboard)/profile/loading": [
+    "/(dashboard)/sessions/scan/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/profile/loading.js"
+      "static/chunks/app/(dashboard)/sessions/scan/page.js"
     ],
-    "/(dashboard)/profile/page": [
+    "/(dashboard)/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/profile/page.js"
+      "static/chunks/app/(dashboard)/dashboard/page.js"
     ],
-    "/page": [
+    "/(dashboard)/serials/timeline/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
-    ],
-    "/(auth)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/layout.js"
-    ],
-    "/(auth)/error": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/error.js"
-    ],
-    "/(auth)/sign-in/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(auth)/sign-in/page.js"
-    ],
-    "/(dashboard)/tasks/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/tasks/[id]/page.js"
+      "static/chunks/app/(dashboard)/serials/timeline/page.js"
     ],
     "/(dashboard)/returns/loading": [
       "static/chunks/webpack.js",
@@ -96,55 +76,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/returns/create/page.js"
     ],
-    "/(dashboard)/returns/[id]/loading": [
+    "/(dashboard)/tasks/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/returns/[id]/loading.js"
-    ],
-    "/(dashboard)/returns/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/returns/[id]/page.js"
-    ],
-    "/(dashboard)/sessions/scan/error": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/sessions/scan/error.js"
-    ],
-    "/(dashboard)/sessions/scan/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/sessions/scan/page.js"
-    ],
-    "/(dashboard)/returns/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/returns/page.js"
-    ],
-    "/(dashboard)/admin/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/admin/page.js"
-    ],
-    "/(dashboard)/admin/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/admin/layout.js"
-    ],
-    "/(dashboard)/admin/users/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/admin/users/page.js"
-    ],
-    "/(dashboard)/admin/teams/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/admin/teams/page.js"
-    ],
-    "/(dashboard)/admin/warehouses/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/admin/warehouses/page.js"
+      "static/chunks/app/(dashboard)/tasks/[id]/page.js"
     ]
   }
 }

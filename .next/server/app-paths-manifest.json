@@ -1,9 +1,9 @@
 {
-  "/(dashboard)/tasks/[id]/page": "app/(dashboard)/tasks/[id]/page.js",
-  "/(dashboard)/sessions/scan/page": "app/(dashboard)/sessions/scan/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
   "/(dashboard)/tasks/page": "app/(dashboard)/tasks/page.js",
-  "/(dashboard)/admin/teams/page": "app/(dashboard)/admin/teams/page.js",
-  "/(dashboard)/admin/users/page": "app/(dashboard)/admin/users/page.js",
-  "/(dashboard)/admin/warehouses/page": "app/(dashboard)/admin/warehouses/page.js",
-  "/(dashboard)/admin/page": "app/(dashboard)/admin/page.js"
+  "/(dashboard)/serials/timeline/page": "app/(dashboard)/serials/timeline/page.js",
+  "/(dashboard)/tasks/[id]/page": "app/(dashboard)/tasks/[id]/page.js",
+  "/(dashboard)/returns/create/page": "app/(dashboard)/returns/create/page.js",
+  "/(dashboard)/sessions/scan/page": "app/(dashboard)/sessions/scan/page.js",
+  "/(dashboard)/admin/teams/page": "app/(dashboard)/admin/teams/page.js"
 }
