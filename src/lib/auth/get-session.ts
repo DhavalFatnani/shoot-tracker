@@ -13,6 +13,8 @@ export interface SessionUser {
   id: string;
   email?: string;
   role: Role;
+  firstName?: string | null;
+  lastName?: string | null;
   teamIds: string[];
   shootTeamIds: string[];
   opsWarehouseIds: string[];
@@ -36,6 +38,8 @@ export async function getSession(): Promise<SessionUser | null> {
         id: user.id,
         email: user.email ?? undefined,
         role: "SHOOT_USER" as Role,
+        firstName: undefined,
+        lastName: undefined,
         teamIds: [],
         shootTeamIds: [],
         opsWarehouseIds: [],
@@ -51,6 +55,8 @@ export async function getSession(): Promise<SessionUser | null> {
       id: user.id,
       email: user.email ?? undefined,
       role: profile.role as Role,
+      firstName: profile.firstName ?? undefined,
+      lastName: profile.lastName ?? undefined,
       teamIds,
       shootTeamIds,
       opsWarehouseIds,
@@ -74,6 +80,8 @@ export async function getSession(): Promise<SessionUser | null> {
             id: user.id,
             email: user.email ?? undefined,
             role: profile.role as Role,
+            firstName: profile.firstName ?? undefined,
+            lastName: profile.lastName ?? undefined,
             teamIds,
             shootTeamIds,
             opsWarehouseIds,
@@ -97,6 +105,8 @@ export async function getSession(): Promise<SessionUser | null> {
         id: user.id,
         email: user.email ?? undefined,
         role,
+        firstName: undefined,
+        lastName: undefined,
         teamIds: [],
         shootTeamIds: [],
         opsWarehouseIds: [],

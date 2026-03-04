@@ -17,3 +17,18 @@ export async function upsertProfile(tx: Tx, userId: string, role: Role) {
       set: { role, updatedAt: new Date() },
     });
 }
+
+export async function updateProfileNames(
+  db: Database | Tx,
+  userId: string,
+  data: { firstName?: string | null; lastName?: string | null }
+) {
+  await db
+    .update(profiles)
+    .set({
+      firstName: data.firstName ?? null,
+      lastName: data.lastName ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(profiles.id, userId));
+}

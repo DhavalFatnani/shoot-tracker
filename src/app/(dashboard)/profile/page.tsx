@@ -5,6 +5,7 @@ import * as warehouseRepo from "@/lib/repositories/warehouse-repository";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { ProfileAccountForm } from "./profile-account-form";
 
 export default async function ProfilePage() {
   let session = null;
@@ -31,15 +32,13 @@ export default async function ProfilePage() {
     // DB or team/warehouse fetch failed; show account info only, no 500
   }
 
-  const initial = (session.email ?? session.id).charAt(0).toUpperCase();
-
   return (
     <div className="space-y-8">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Profile" }]} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Profile</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Your account, change password, and role details.</p>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Your account, name, change password, and role details.</p>
         </div>
         <Link
           href="/profile/change-password"
@@ -49,31 +48,12 @@ export default async function ProfilePage() {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-600">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Account</h2>
-        </div>
-        <div className="p-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xl font-semibold text-teal-700 dark:bg-teal-900/50 dark:text-teal-200">
-              {initial}
-            </div>
-            <div>
-              <p className="font-medium text-zinc-900 dark:text-zinc-100">{session.email ?? "—"}</p>
-            </div>
-          </div>
-          <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Role</dt>
-              <dd className="mt-1">
-                <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-sm font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
-                  {session.role.replace("_", " ")}
-                </span>
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </div>
+      <ProfileAccountForm
+        email={session.email}
+        role={session.role}
+        initialFirstName={session.firstName}
+        initialLastName={session.lastName}
+      />
 
       {teamList.length > 0 && (
         <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">

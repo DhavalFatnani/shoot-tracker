@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef } from "react";
 import { startSession, addScan, commitSession, cancelSession } from "@/app/actions/session-actions";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -41,6 +41,8 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
   const [cancelPending, setCancelPending] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const lastKeyTimeRef = useRef(0);
+  const SCANNER_MS = 80;
 
   function handleStartSession() {
     setMessage(null);
@@ -121,6 +123,31 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
   const okCount = items.filter((i) => i.scanStatus !== "ERROR").length;
   const errCount = items.filter((i) => i.scanStatus === "ERROR").length;
 
+  function onScanKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddScan();
+      return;
+    }
+    if (e.key === "Backspace") {
+      e.preventDefault();
+      setScanInput((prev) => prev.slice(0, -1));
+      lastKeyTimeRef.current = Date.now();
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      e.preventDefault();
+      return;
+    }
+    if (e.key.length === 1) {
+      e.preventDefault();
+      const now = Date.now();
+      const isFast = now - lastKeyTimeRef.current <= SCANNER_MS;
+      lastKeyTimeRef.current = now;
+      setScanInput((prev) => (isFast ? prev + e.key : e.key));
+    }
+  }
+
   return (
     <div className="space-y-6">
       {!sessionId ? (
@@ -162,9 +189,14 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
               <input
                 type="text"
                 value={scanInput}
-                onChange={(e) => setScanInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddScan())}
-                placeholder="Scan or enter serial ID"
+                onChange={() => {}}
+                onKeyDown={onScanKeyDown}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  toast("Use scanner only; typing and paste are not allowed.", { variant: "error" });
+                }}
+                placeholder="Scan serial (scanner only)"
+                autoComplete="off"
                 autoFocus
                 className="flex-1 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               />
@@ -191,7 +223,7 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
               </div>
             </div>
             {items.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-slate-400">No items scanned yet. Enter a serial ID above.</p>
+              <p className="px-5 py-8 text-center text-sm text-slate-400">No items scanned yet. Use the barcode scanner above.</p>
             ) : (
               <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
                 {items.map((item, idx) => (

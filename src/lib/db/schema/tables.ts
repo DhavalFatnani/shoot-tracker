@@ -54,6 +54,8 @@ export const teams = pgTable("teams", {
 export const profiles = pgTable("profiles", {
   id: uuid("id").primaryKey(),
   role: roleEnum("role").notNull(),
+  firstName: varchar("first_name", { length: 128 }),
+  lastName: varchar("last_name", { length: 128 }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

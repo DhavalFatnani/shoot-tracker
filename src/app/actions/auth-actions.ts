@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getSession } from "@/lib/auth/get-session";
 import { getDb } from "@/lib/db/client";
-import { upsertProfile } from "@/lib/repositories/profile-repository";
+import { upsertProfile, updateProfileNames } from "@/lib/repositories/profile-repository";
 import type { Role } from "@/lib/validations";
 
 function isConnectError(e: unknown): boolean {
@@ -111,6 +111,22 @@ export async function adminListUsers() {
     return { error: null, users };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Something went wrong.", users: [] };
+  }
+}
+
+/** Update current user's first and last name (profile page). */
+export async function updateProfile(input: { firstName?: string | null; lastName?: string | null }) {
+  const session = await getSession();
+  if (!session) return { error: "Not signed in." };
+  try {
+    const db = getDb();
+    await updateProfileNames(db, session.id, {
+      firstName: input.firstName ?? null,
+      lastName: input.lastName ?? null,
+    });
+    return { error: null };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Something went wrong." };
   }
 }
 
