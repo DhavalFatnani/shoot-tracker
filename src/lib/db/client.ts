@@ -10,9 +10,13 @@ function initDb() {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set. Set it in Vercel Environment Variables.");
   }
+  // Keep 1 connection per serverless instance to avoid exhausting pooler (MaxClientsInSessionMode).
+  // If using Supabase/Neon pooler, prefer the Transaction-mode URL so the pooler can multiplex.
   const client = postgres(connectionString, {
-    max: 10,
+    max: 1,
     prepare: false,
+    idle_timeout: 20,
+    connect_timeout: 10,
   });
   globalForDb._db = drizzle(client, { schema });
   return globalForDb._db;
