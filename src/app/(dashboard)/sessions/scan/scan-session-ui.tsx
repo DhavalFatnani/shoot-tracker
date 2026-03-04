@@ -195,6 +195,7 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
                   e.preventDefault();
                   toast("Use scanner only; typing and paste are not allowed.", { variant: "error" });
                 }}
+                onCopy={(e) => e.preventDefault()}
                 placeholder="Scan serial (scanner only)"
                 autoComplete="off"
                 autoFocus
