@@ -140,6 +140,9 @@ export async function closeTask(taskId: string, userId: string, userRole: Role, 
   const db = getDb();
   const task = await taskRepo.taskById(db, taskId);
   if (!task) throw new NotFoundError("Task", taskId);
+  if (task.status === "CLOSED") {
+    throw new InvariantViolationError("Task is already closed.");
+  }
 
   const countsMap = await taskSerialRepo.taskSerialCountsByStatus(db, taskId);
   const counts = computeTaskSerialCounts(countsMap);
@@ -217,6 +220,9 @@ export async function markSerialSold(
   const db = getDb();
   const task = await taskRepo.taskById(db, taskId);
   if (!task) throw new NotFoundError("Task", taskId);
+  if (task.status === "CLOSED") {
+    throw new InvariantViolationError("Task is closed. Cannot update serials.");
+  }
 
   const taskSerial = await taskSerialRepo.getTaskSerial(db, taskId, serialId);
   if (!taskSerial) throw new NotFoundError("Serial", serialId);
@@ -266,6 +272,9 @@ export async function markSerialNotFound(
   const db = getDb();
   const task = await taskRepo.taskById(db, taskId);
   if (!task) throw new NotFoundError("Task", taskId);
+  if (task.status === "CLOSED") {
+    throw new InvariantViolationError("Task is closed. Cannot update serials.");
+  }
 
   const taskSerial = await taskSerialRepo.getTaskSerial(db, taskId, serialId);
   if (!taskSerial) throw new NotFoundError("Serial", serialId);
@@ -301,6 +310,9 @@ export async function markSerialQcFail(
   const db = getDb();
   const task = await taskRepo.taskById(db, taskId);
   if (!task) throw new NotFoundError("Task", taskId);
+  if (task.status === "CLOSED") {
+    throw new InvariantViolationError("Task is closed. Cannot update serials.");
+  }
 
   const taskSerial = await taskSerialRepo.getTaskSerial(db, taskId, serialId);
   if (!taskSerial) throw new NotFoundError("Serial", serialId);
@@ -338,6 +350,9 @@ export async function bulkDispatch(
   const db = getDb();
   const task = await taskRepo.taskById(db, taskId);
   if (!task) throw new NotFoundError("Task", taskId);
+  if (task.status === "CLOSED") {
+    throw new InvariantViolationError("Task is closed. Cannot dispatch.");
+  }
 
   const packedSerials = await db
     .select({ serialId: taskSerials.serialId })

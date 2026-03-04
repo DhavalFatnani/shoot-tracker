@@ -35,6 +35,9 @@ export async function startSession(input: StartSessionInput, userId: string, _us
   const db = getDb();
   const task = await taskRepo.taskById(db, input.taskId);
   if (!task) throw new NotFoundError("Task", input.taskId);
+  if (task.status === "CLOSED") {
+    throw new InvariantViolationError("Cannot start a scan session for a closed task.");
+  }
   const { from, to } = SESSION_TYPE_FROM_TO[input.type] ?? { from: "WH_", to: "TRANSIT" };
 
   const TASK_STATUS_ON_START: Record<string, string> = {

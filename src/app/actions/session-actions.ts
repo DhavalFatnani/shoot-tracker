@@ -1,6 +1,8 @@
 "use server";
 
 import { getSession } from "@/lib/auth/get-session";
+import { getDb } from "@/lib/db/client";
+import * as taskRepo from "@/lib/repositories/task-repository";
 import * as sessionService from "@/lib/services/session-service";
 import { startSessionSchema, addScanSchema, commitSessionSchema, cancelSessionSchema } from "@/lib/validations";
 import { AppError } from "@/lib/errors";
@@ -31,6 +33,11 @@ export async function startSession(formData: FormData) {
   const allowed = ALLOWED_TYPES[session.role] ?? [];
   if (!allowed.includes(result.data.type)) {
     return { success: false, error: `Your role (${session.role}) cannot start a ${result.data.type} session` };
+  }
+
+  const task = await taskRepo.taskById(getDb(), result.data.taskId);
+  if (task?.status === "CLOSED") {
+    return { success: false, error: "Cannot start a scan session for a closed task." };
   }
 
   try {

@@ -23,15 +23,17 @@ type SerialActionsProps = {
   taskId: string;
   taskSerials: TaskSerial[];
   userRole: string;
+  taskStatus?: string;
 };
 
-export function SerialActions({ taskId, taskSerials, userRole }: SerialActionsProps) {
+export function SerialActions({ taskId, taskSerials, userRole, taskStatus }: SerialActionsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const packedSerials = taskSerials.filter(s => s.status === "PACKED" || s.status === "PICKED");
   const isOpsOrAdmin = userRole === "OPS_USER" || userRole === "ADMIN";
+  const canAct = taskStatus !== "CLOSED";
   const [dispatchDialogOpen, setDispatchDialogOpen] = useState(false);
   const [dispatchLoading, setDispatchLoading] = useState(false);
 
@@ -82,7 +84,7 @@ export function SerialActions({ taskId, taskSerials, userRole }: SerialActionsPr
           </span>
         </div>
 
-        {isOpsOrAdmin && packedSerials.length > 0 && (
+        {isOpsOrAdmin && packedSerials.length > 0 && canAct && (
           <>
             <button
               onClick={() => setDispatchDialogOpen(true)}
@@ -122,10 +124,12 @@ export function SerialRowActions({
   serial,
   taskId,
   userRole,
+  taskStatus,
 }: {
   serial: SerialRowActionsSerial;
   taskId: string;
   userRole: string;
+  taskStatus?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -137,6 +141,7 @@ export function SerialRowActions({
   const [disputeDescription, setDisputeDescription] = useState("");
 
   if (!serial?.serialId || serial.status == null) return null;
+  if (taskStatus === "CLOSED") return null;
 
   const isAdmin = userRole === "ADMIN";
   const isOpsOrAdmin = userRole === "OPS_USER" || isAdmin;

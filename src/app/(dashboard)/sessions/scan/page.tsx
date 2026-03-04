@@ -24,14 +24,18 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
     formData.set("limit", "50");
     const result = await listTasks(formData);
     if (result.success && result.data) {
-      tasksForPicker = result.data.map((t) => ({
-        id: t.id,
-        name: t.name ?? null,
-        status: t.status,
-        serial: t.serial,
-      }));
+      tasksForPicker = result.data
+        .filter((t) => t.status !== "CLOSED")
+        .map((t) => ({
+          id: t.id,
+          name: t.name ?? null,
+          status: t.status,
+          serial: t.serial,
+        }));
     }
   }
+
+  const taskClosed = task != null && task.status === "CLOSED";
 
   return (
     <div className="space-y-6">
@@ -72,7 +76,23 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
         </div>
       )}
 
-      {taskId && task && <ScanSessionUI taskId={taskId} userRole={session.role} defaultSessionType={defaultSessionType} />}
+      {taskId && task && taskClosed && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
+          <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200">Task closed</h2>
+          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+            Scan sessions are not available for closed tasks. Select another task or go back to the task list.
+          </p>
+          <Link
+            href="/sessions/scan"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 underline hover:no-underline dark:text-amber-200"
+          >
+            Choose a task
+          </Link>
+        </div>
+      )}
+      {taskId && task && !taskClosed && (
+        <ScanSessionUI taskId={taskId} userRole={session.role} defaultSessionType={defaultSessionType} />
+      )}
     </div>
   );
 }

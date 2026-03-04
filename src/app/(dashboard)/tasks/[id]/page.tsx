@@ -103,7 +103,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              {(session.role === "ADMIN" || session.role === "SHOOT_USER") && balance.received > 0 && (
+              {(session.role === "ADMIN" || session.role === "SHOOT_USER") && balance.received > 0 && task.status !== "CLOSED" && (
                 <Link
                   href={`/returns/create?taskId=${task.id}`}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-medium text-teal-800 transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-200 dark:hover:bg-teal-900/50"
@@ -217,20 +217,26 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   {taskSerials.length} unit{taskSerials.length !== 1 ? "s" : ""} · Serial number ↔ SKU
                 </p>
               </div>
-              <Link
-                href={`/sessions/scan?taskId=${task.id}`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-500 dark:bg-teal-500 dark:hover:bg-teal-600"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5z" clipRule="evenodd" />
-                  <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4z" />
-                </svg>
-                Open scan
-              </Link>
+              {task.status !== "CLOSED" ? (
+                <Link
+                  href={`/sessions/scan?taskId=${task.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-500 dark:bg-teal-500 dark:hover:bg-teal-600"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5z" clipRule="evenodd" />
+                    <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4z" />
+                  </svg>
+                  Open scan
+                </Link>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                  Task closed
+                </span>
+              )}
             </div>
           </div>
           <div className="border-b border-zinc-100 px-4 py-2 dark:border-zinc-600">
-            <SerialActions taskId={task.id} taskSerials={taskSerials} userRole={session.role} />
+            <SerialActions taskId={task.id} taskSerials={taskSerials} userRole={session.role} taskStatus={task.status} />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -284,7 +290,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                     </td>
                     {(session.role === "ADMIN" || session.role === "OPS_USER") && (
                       <td className="px-4 py-2">
-                        <SerialRowActions serial={ts} taskId={task.id} userRole={session.role} />
+                        <SerialRowActions serial={ts} taskId={task.id} userRole={session.role} taskStatus={task.status} />
                       </td>
                     )}
                   </tr>

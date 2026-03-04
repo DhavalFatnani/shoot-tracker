@@ -1,7 +1,8 @@
 import { getDb } from "@/lib/db/client";
 import * as disputeRepo from "@/lib/repositories/dispute-repository";
+import * as taskRepo from "@/lib/repositories/task-repository";
 import type { Role } from "@/lib/validations";
-import { NotFoundError, ForbiddenError } from "@/lib/errors";
+import { NotFoundError, ForbiddenError, InvariantViolationError } from "@/lib/errors";
 
 export async function listDisputesByTask(taskId: string) {
   const db = getDb();
@@ -17,6 +18,11 @@ export async function createDispute(
     throw new ForbiddenError("Only OPS or ADMIN can create disputes");
   }
   const db = getDb();
+  const task = await taskRepo.taskById(db, input.taskId);
+  if (!task) throw new NotFoundError("Task", input.taskId);
+  if (task.status === "CLOSED") {
+    throw new InvariantViolationError("Cannot raise a dispute on a closed task.");
+  }
   const id = await db.transaction(async (tx) => {
     return disputeRepo.createDispute(tx, input);
   });
