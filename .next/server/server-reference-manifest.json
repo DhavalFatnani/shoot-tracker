@@ -29,6 +29,10 @@
         "app/(dashboard)/tasks/[id]/page": {
           "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2F(dashboard)%2Flayout.tsx%22%2C%5B%5B%22008f314b7abee2cbed09af77ca7edb3d6560172de2%22%2C%22%24%24RSC_SERVER_ACTION_0%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Ftask-actions.ts%22%2C%5B%5B%224006810182ae28700d55d7badca83a41269399140b%22%2C%22getTask%22%5D%2C%5B%22400eddf2f4a318f4703737d6dd57d0a8ef12855467%22%2C%22markSerialQcFail%22%5D%2C%5B%224025b67e663bc1ee372265df5e86e3a3b25b153c73%22%2C%22markSerialSold%22%5D%2C%5B%224028e36821b4c9165718830a3857fa58e21265a5ec%22%2C%22adminDeleteTask%22%5D%2C%5B%2240469eeb430c71435539c36710f884d9f6c2422a69%22%2C%22markSerialNotFound%22%5D%2C%5B%22404f12f1a04e10bd24ad8ecfff26d4e09d1d4f1ca9%22%2C%22listTasks%22%5D%2C%5B%22405379c62f731d63489255f9d4eedf4cd88a6fd781%22%2C%22adminUpdateTask%22%5D%2C%5B%22406e9e58417203032b0457413a5da449c9e1f5117e%22%2C%22createRequest%22%5D%2C%5B%2240a73e9cd9cfe2216dcc5b189700198aed495cec58%22%2C%22closeTask%22%5D%2C%5B%2240a8669a9b4a7c7d214d43c894c81b109ea19f63f3%22%2C%22adminRevertSerial%22%5D%2C%5B%2240c5a37c124ede340fbbb98e77ec5027291a97a672%22%2C%22markReceivedTask%22%5D%2C%5B%2240ebee5c0845094de845ebaf6683131ab3a14cfd8a%22%2C%22adminReopenTask%22%5D%2C%5B%2240f1c99e3f7237c397a41a985f65d9376e76f909db%22%2C%22bulkDispatch%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Factivity-actions.ts%22%2C%5B%5B%22404baf479076004d464dc86981925422a6354ada1a%22%2C%22listActivityLogs%22%5D%2C%5B%2240803f40079b76114e33ef8aa647bf53416a72042e%22%2C%22getTaskActivity%22%5D%2C%5B%22408f5249264dffa852541eb4e9821e517537805cf0%22%2C%22getTaskTimeline%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdispute-actions.ts%22%2C%5B%5B%22403fa8123ca4f053b37c3d9f08872fcdd6b199be96%22%2C%22resolveDispute%22%5D%2C%5B%2240489a0cb6ba7751c743770811c3186c06236f36b9%22%2C%22listDisputesByTask%22%5D%2C%5B%22409cf052eef10a201192fa1305f3b1fb59edc6bb94%22%2C%22uploadDisputePhoto%22%5D%2C%5B%2240e3741b4eae3a63fee01f223d5873b0548cf313bb%22%2C%22raiseDispute%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fcomment-actions.ts%22%2C%5B%5B%2240b0da10b415f0fb7f74c7f5907bacf590f7edb782%22%2C%22listComments%22%5D%2C%5B%2240e73718f47e0dd0d8561085ef52189a9335b89562%22%2C%22addComment%22%5D%5D%5D%5D&__client_imported__=!",
           "async": false
+        },
+        "app/(dashboard)/profile/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2F(dashboard)%2Flayout.tsx%22%2C%5B%5B%22008f314b7abee2cbed09af77ca7edb3d6560172de2%22%2C%22%24%24RSC_SERVER_ACTION_0%22%5D%5D%5D%5D&__client_imported__=!",
+          "async": false
         }
       },
       "layer": {
@@ -38,7 +42,8 @@
         "app/(dashboard)/dashboard/page": "rsc",
         "app/(dashboard)/serials/timeline/page": "rsc",
         "app/(dashboard)/returns/create/page": "rsc",
-        "app/(dashboard)/tasks/[id]/page": "rsc"
+        "app/(dashboard)/tasks/[id]/page": "rsc",
+        "app/(dashboard)/profile/page": "rsc"
       }
     },
     "0088a31c77f5a96abee83ab54825d5975d7d6e104d": {
@@ -70,6 +75,10 @@
         "app/(dashboard)/tasks/[id]/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/profile/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
@@ -79,7 +88,8 @@
         "app/(dashboard)/dashboard/page": "rsc",
         "app/(dashboard)/serials/timeline/page": "action-browser",
         "app/(dashboard)/returns/create/page": "action-browser",
-        "app/(dashboard)/tasks/[id]/page": "action-browser"
+        "app/(dashboard)/tasks/[id]/page": "action-browser",
+        "app/(dashboard)/profile/page": "action-browser"
       }
     },
     "00d5aed512ea4157050cb70e1055ed5f2310a574b0": {
@@ -111,6 +121,10 @@
         "app/(dashboard)/tasks/[id]/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/profile/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
@@ -120,7 +134,8 @@
         "app/(dashboard)/dashboard/page": "rsc",
         "app/(dashboard)/serials/timeline/page": "action-browser",
         "app/(dashboard)/returns/create/page": "action-browser",
-        "app/(dashboard)/tasks/[id]/page": "action-browser"
+        "app/(dashboard)/tasks/[id]/page": "action-browser",
+        "app/(dashboard)/profile/page": "action-browser"
       }
     },
     "002ee92dbe835ec8ca24e159838f93fb919a0f6e0f": {
