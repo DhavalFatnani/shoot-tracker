@@ -143,10 +143,16 @@ export async function adminDeleteUser(input: { userId: string }) {
 
   try {
     const db = getDb();
-    const { teamMembers, profiles } = await import("@/lib/db/schema");
+    const { teamMembers, profiles, returns } = await import("@/lib/db/schema");
     const { eq } = await import("drizzle-orm");
 
     await db.transaction(async (tx) => {
+      // Reassign returns created by this user to the admin performing the delete,
+      // so the profiles FK is satisfied before we delete the profile.
+      await tx
+        .update(returns)
+        .set({ createdBy: session.id })
+        .where(eq(returns.createdBy, input.userId));
       await tx.delete(teamMembers).where(eq(teamMembers.userId, input.userId));
       await tx.delete(profiles).where(eq(profiles.id, input.userId));
     });
