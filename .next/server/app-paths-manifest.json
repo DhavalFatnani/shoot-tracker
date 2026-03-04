@@ -1,8 +1,8 @@
 {
   "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/(dashboard)/tasks/[id]/page": "app/(dashboard)/tasks/[id]/page.js",
   "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
-  "/(dashboard)/returns/create/page": "app/(dashboard)/returns/create/page.js",
   "/(auth)/sign-in/page": "app/(auth)/sign-in/page.js",
+  "/(dashboard)/tasks/[id]/page": "app/(dashboard)/tasks/[id]/page.js",
+  "/(dashboard)/returns/create/page": "app/(dashboard)/returns/create/page.js",
   "/(dashboard)/admin/users/page": "app/(dashboard)/admin/users/page.js"
 }

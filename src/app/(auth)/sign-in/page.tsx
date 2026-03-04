@@ -2,26 +2,33 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SignInForm } from "./sign-in-form";
-import { SignInMessageToast } from "./sign-in-message-toast";
 
 export default async function SignInPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user) redirect("/dashboard");
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) redirect("/dashboard");
+  } catch {
+    // If Supabase check fails (e.g. env or network), still show the form so the page never goes blank
+  }
 
-  const params = await searchParams;
-  const error = params.error;
-  const message = params.message;
+  let error: string | undefined;
+  let message: string | undefined;
+  try {
+    const params = await searchParams;
+    error = params.error;
+    message = params.message;
+  } catch {
+    error = undefined;
+    message = undefined;
+  }
 
   return (
     <div className="w-full max-w-md">
-      <SignInMessageToast message={message} />
       <div className="rounded-2xl border border-zinc-200/80 bg-white/90 p-8 shadow-xl shadow-zinc-200/20 backdrop-blur-md dark:border-zinc-700/80 dark:bg-zinc-900/90 sm:p-10">
         <div className="mb-8 text-center">
           <Link
