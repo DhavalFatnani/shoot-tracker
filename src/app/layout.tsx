@@ -5,6 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: "ShootTrack",
   description: "Serialized shoot inventory tracker",
+  icons: {
+    icon: "/icon",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
