@@ -8,8 +8,14 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
-  if (!session || session.role !== "ADMIN") {
+  let session = null;
+  try {
+    session = await getSession();
+  } catch {
+    redirect("/dashboard?message=Session+unavailable.+Please+try+again.");
+  }
+  const role = (session?.role ?? "").toString().trim().toUpperCase();
+  if (role !== "ADMIN") {
     redirect("/dashboard");
   }
 

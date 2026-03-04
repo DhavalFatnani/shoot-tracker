@@ -33,6 +33,14 @@
         "app/(dashboard)/profile/page": {
           "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2F(dashboard)%2Flayout.tsx%22%2C%5B%5B%22008f314b7abee2cbed09af77ca7edb3d6560172de2%22%2C%22%24%24RSC_SERVER_ACTION_0%22%5D%5D%5D%5D&__client_imported__=!",
           "async": false
+        },
+        "app/(dashboard)/admin/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2F(dashboard)%2Flayout.tsx%22%2C%5B%5B%22008f314b7abee2cbed09af77ca7edb3d6560172de2%22%2C%22%24%24RSC_SERVER_ACTION_0%22%5D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2F(dashboard)%2Flayout.tsx%22%2C%5B%5B%22008f314b7abee2cbed09af77ca7edb3d6560172de2%22%2C%22%24%24RSC_SERVER_ACTION_0%22%5D%5D%5D%5D&__client_imported__=!",
+          "async": false
         }
       },
       "layer": {
@@ -43,7 +51,9 @@
         "app/(dashboard)/serials/timeline/page": "rsc",
         "app/(dashboard)/returns/create/page": "rsc",
         "app/(dashboard)/tasks/[id]/page": "rsc",
-        "app/(dashboard)/profile/page": "rsc"
+        "app/(dashboard)/profile/page": "rsc",
+        "app/(dashboard)/admin/page": "rsc",
+        "app/(dashboard)/admin/users/page": "rsc"
       }
     },
     "0088a31c77f5a96abee83ab54825d5975d7d6e104d": {
@@ -79,6 +89,14 @@
         "app/(dashboard)/profile/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
@@ -89,7 +107,9 @@
         "app/(dashboard)/serials/timeline/page": "action-browser",
         "app/(dashboard)/returns/create/page": "action-browser",
         "app/(dashboard)/tasks/[id]/page": "action-browser",
-        "app/(dashboard)/profile/page": "action-browser"
+        "app/(dashboard)/profile/page": "action-browser",
+        "app/(dashboard)/admin/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "00d5aed512ea4157050cb70e1055ed5f2310a574b0": {
@@ -125,6 +145,14 @@
         "app/(dashboard)/profile/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
@@ -135,7 +163,9 @@
         "app/(dashboard)/serials/timeline/page": "action-browser",
         "app/(dashboard)/returns/create/page": "action-browser",
         "app/(dashboard)/tasks/[id]/page": "action-browser",
-        "app/(dashboard)/profile/page": "action-browser"
+        "app/(dashboard)/profile/page": "action-browser",
+        "app/(dashboard)/admin/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "002ee92dbe835ec8ca24e159838f93fb919a0f6e0f": {
@@ -235,11 +265,16 @@
         "app/(auth)/sign-in/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
         "app/(dashboard)/admin/teams/page": "action-browser",
-        "app/(auth)/sign-in/page": "action-browser"
+        "app/(auth)/sign-in/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "4015ae029184af4eabc654ff8cd73d8024e95d02bb": {
@@ -251,11 +286,16 @@
         "app/(auth)/sign-in/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
         "app/(dashboard)/admin/teams/page": "action-browser",
-        "app/(auth)/sign-in/page": "action-browser"
+        "app/(auth)/sign-in/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "40741a40e2cedcd619354a9a0339f42b95ef32bbaf": {
@@ -267,11 +307,16 @@
         "app/(auth)/sign-in/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
         "app/(dashboard)/admin/teams/page": "action-browser",
-        "app/(auth)/sign-in/page": "action-browser"
+        "app/(auth)/sign-in/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "407aa27837cd37dbb00c3a5e5ad06d222a554877e9": {
@@ -283,11 +328,16 @@
         "app/(auth)/sign-in/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
         "app/(dashboard)/admin/teams/page": "action-browser",
-        "app/(auth)/sign-in/page": "action-browser"
+        "app/(auth)/sign-in/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "408d6de5283433070f25037daba086ddc548adf58e": {
@@ -299,11 +349,16 @@
         "app/(auth)/sign-in/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
         "app/(dashboard)/admin/teams/page": "action-browser",
-        "app/(auth)/sign-in/page": "action-browser"
+        "app/(auth)/sign-in/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "60bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29": {
@@ -315,11 +370,16 @@
         "app/(auth)/sign-in/page": {
           "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
           "async": false
+        },
+        "app/(dashboard)/admin/users/page": {
+          "moduleId": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fdashboard-actions.ts%22%2C%5B%5B%220088a31c77f5a96abee83ab54825d5975d7d6e104d%22%2C%22getDashboardKpis%22%5D%2C%5B%2200d5aed512ea4157050cb70e1055ed5f2310a574b0%22%2C%22getOpenDisputesCount%22%5D%5D%5D%2C%5B%22%2FUsers%2Fdhaval%2FDownloads%2FKNOT%2Fshoot-tracker%2Fsrc%2Fapp%2Factions%2Fauth-actions.ts%22%2C%5B%5B%2200b9ec0619a64f938bac2905820b4b247eee463012%22%2C%22adminListUsers%22%5D%2C%5B%224015ae029184af4eabc654ff8cd73d8024e95d02bb%22%2C%22adminCreateUser%22%5D%2C%5B%2240741a40e2cedcd619354a9a0339f42b95ef32bbaf%22%2C%22adminDeleteUser%22%5D%2C%5B%22407aa27837cd37dbb00c3a5e5ad06d222a554877e9%22%2C%22adminUpdateUserRole%22%5D%2C%5B%22408d6de5283433070f25037daba086ddc548adf58e%22%2C%22signIn%22%5D%2C%5B%2260bbc8cf9f9527f595650ac3aef03fbc1a35f8fc29%22%2C%22requestPasswordReset%22%5D%5D%5D%5D&__client_imported__=true!",
+          "async": false
         }
       },
       "layer": {
         "app/(dashboard)/admin/teams/page": "action-browser",
-        "app/(auth)/sign-in/page": "action-browser"
+        "app/(auth)/sign-in/page": "action-browser",
+        "app/(dashboard)/admin/users/page": "action-browser"
       }
     },
     "4006810182ae28700d55d7badca83a41269399140b": {
