@@ -52,10 +52,32 @@ export async function getSession(): Promise<SessionUser | null> {
       opsWarehouseIds,
     };
   } catch {
-    // If we already have a user from Supabase auth but DB/profile fetch failed, return a minimal
-    // session so the user stays on the app instead of being sent to sign-in ("session expired").
-    // Role will be SHOOT_USER until DB is reachable and profile exists.
+    // If we have a user but the first DB/profile fetch failed (e.g. transient error), retry once
+    // so the role doesn't randomly switch to Shoot when the DB hiccups.
     if (user) {
+      try {
+        const db = getDb();
+        const [profile, teamIds] = await Promise.all([
+          profileById(db, user.id),
+          teamIdsByUserId(db, user.id),
+        ]);
+        if (profile) {
+          const teams = await teamsByIds(db, teamIds);
+          type TeamRow = { id: string; type: string; warehouseId: string | null };
+          const shootTeamIds = (teams as TeamRow[]).filter((t: TeamRow) => t.type === "SHOOT").map((t: TeamRow) => t.id);
+          const opsWarehouseIds = (teams as TeamRow[]).filter((t: TeamRow) => t.type === "OPS" && t.warehouseId).map((t: TeamRow) => t.warehouseId!);
+          return {
+            id: user.id,
+            email: user.email ?? undefined,
+            role: profile.role as Role,
+            teamIds,
+            shootTeamIds,
+            opsWarehouseIds,
+          };
+        }
+      } catch {
+        // Retry also failed; use minimal session so user stays in the app.
+      }
       return {
         id: user.id,
         email: user.email ?? undefined,
