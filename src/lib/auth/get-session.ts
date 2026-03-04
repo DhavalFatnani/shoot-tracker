@@ -52,16 +52,8 @@ export async function getSession(): Promise<SessionUser | null> {
       opsWarehouseIds,
     };
   } catch {
-    if (user) {
-      return {
-        id: user.id,
-        email: user.email ?? undefined,
-        role: "SHOOT_USER" as Role,
-        teamIds: [],
-        shootTeamIds: [],
-        opsWarehouseIds: [],
-      };
-    }
+    // Do not return a session with a guessed role — return null so the app redirects to sign-in.
+    // Otherwise (e.g. DB or profile fetch failure) every user would appear as Shoot.
     return null;
   }
 }

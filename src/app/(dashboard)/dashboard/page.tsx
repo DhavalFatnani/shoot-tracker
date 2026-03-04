@@ -139,7 +139,8 @@ export default async function DashboardPage() {
   const role = session?.role ?? "SHOOT_USER";
   const cards = buildCards(role, kpis);
   const greeting = session?.email ? session.email.split("@")[0] : "there";
-  const roleLabel = role === "OPS_USER" ? "Ops" : role === "SHOOT_USER" ? "Shoot" : "Admin";
+  const roleLabel =
+    role === "OPS_USER" ? "Ops" : role === "SHOOT_USER" ? "Shoot" : role === "ADMIN" ? "Admin" : "—";
 
   return (
     <div className="min-h-[60vh]">
