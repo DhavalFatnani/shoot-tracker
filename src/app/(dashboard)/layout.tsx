@@ -1,8 +1,11 @@
+import { cookies } from "next/headers";
 import { getSession } from "@/lib/auth/get-session";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "./sidebar";
 import { DashboardClientWrapper } from "./dashboard-client-wrapper";
+
+const LAST_ROLE_COOKIE = "x-last-role";
 
 export default async function DashboardLayout({
   children,
@@ -16,6 +19,20 @@ export default async function DashboardLayout({
     redirect("/sign-in?message=Something+went+wrong.+Please+sign+in+again.");
   }
   if (!session) redirect("/sign-in?message=Session+expired.+Please+sign+in+again.");
+
+  // Store role in cookie so when DB fails we can still show correct role (avoids admin showing as Shoot)
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(LAST_ROLE_COOKIE, session.role, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    });
+  } catch {
+    // Non-fatal
+  }
 
   async function signOut() {
     "use server";

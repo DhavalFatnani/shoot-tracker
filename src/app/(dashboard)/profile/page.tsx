@@ -3,21 +3,33 @@ import { getDb } from "@/lib/db/client";
 import * as teamRepo from "@/lib/repositories/team-repository";
 import * as warehouseRepo from "@/lib/repositories/warehouse-repository";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export default async function ProfilePage() {
-  const session = await getSession();
-  if (!session) return null;
+  let session = null;
+  try {
+    session = await getSession();
+  } catch {
+    redirect("/dashboard?message=Profile+unavailable.+Try+again.");
+  }
+  if (!session) redirect("/dashboard");
 
-  const db = getDb();
-  const [teams, warehouses] = await Promise.all([
-    session.teamIds.length > 0 ? teamRepo.teamsByIds(db, session.teamIds) : Promise.resolve([]),
-    session.opsWarehouseIds.length > 0
-      ? Promise.all(session.opsWarehouseIds.map((id) => warehouseRepo.warehouseById(db, id)))
-      : Promise.resolve([]),
-  ]);
-  const teamList = teams as { id: string; name: string; type: string }[];
-  const warehouseList = warehouses.filter(Boolean) as { id: string; name: string; code: string }[];
+  let teamList: { id: string; name: string; type: string }[] = [];
+  let warehouseList: { id: string; name: string; code: string }[] = [];
+  try {
+    const db = getDb();
+    const [teams, warehouses] = await Promise.all([
+      session.teamIds.length > 0 ? teamRepo.teamsByIds(db, session.teamIds) : Promise.resolve([]),
+      session.opsWarehouseIds.length > 0
+        ? Promise.all(session.opsWarehouseIds.map((id) => warehouseRepo.warehouseById(db, id)))
+        : Promise.resolve([]),
+    ]);
+    teamList = teams as { id: string; name: string; type: string }[];
+    warehouseList = warehouses.filter(Boolean) as { id: string; name: string; code: string }[];
+  } catch {
+    // DB or team/warehouse fetch failed; show account info only, no 500
+  }
 
   const initial = (session.email ?? session.id).charAt(0).toUpperCase();
 
@@ -101,11 +113,16 @@ export default async function ProfilePage() {
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-900/20">
           <p className="text-sm font-medium text-amber-800 dark:text-amber-200">No team assigned</p>
           <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-            You are not in any team yet. Contact your admin to be assigned to a shoot or ops team.
+            You are not in any team yet. Contact your admin to be assigned to a shoot or ops team. If your role or teams look wrong (e.g. you are an admin), refresh the page or ask an admin to set your role in Admin → Users.
           </p>
-          <Link href="/dashboard" className="mt-3 inline-block text-sm font-medium text-amber-800 underline hover:no-underline dark:text-amber-200">
-            Back to dashboard
-          </Link>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <Link href="/dashboard" className="text-sm font-medium text-amber-800 underline hover:no-underline dark:text-amber-200">
+              Back to dashboard
+            </Link>
+            <a href="/profile" className="text-sm font-medium text-amber-800 underline hover:no-underline dark:text-amber-200">
+              Refresh profile
+            </a>
+          </div>
         </div>
       )}
     </div>

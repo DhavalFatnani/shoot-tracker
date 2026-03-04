@@ -1,9 +1,13 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { profileById } from "@/lib/repositories/profile-repository";
 import { teamIdsByUserId } from "@/lib/repositories/team-repository";
 import { teamsByIds } from "@/lib/repositories/team-repository";
 import { getDb } from "@/lib/db/client";
 import type { Role } from "@/lib/validations";
+
+const LAST_ROLE_COOKIE = "x-last-role";
+const VALID_ROLES = ["ADMIN", "OPS_USER", "SHOOT_USER"] as const;
 
 export interface SessionUser {
   id: string;
@@ -78,10 +82,21 @@ export async function getSession(): Promise<SessionUser | null> {
       } catch {
         // Retry also failed; use minimal session so user stays in the app.
       }
+      // Use last known role from cookie so admins/ops don't appear as Shoot when DB fails
+      let role: Role = "SHOOT_USER";
+      try {
+        const cookieStore = await cookies();
+        const lastRole = cookieStore.get(LAST_ROLE_COOKIE)?.value;
+        if (lastRole && VALID_ROLES.includes(lastRole as (typeof VALID_ROLES)[number])) {
+          role = lastRole as Role;
+        }
+      } catch {
+        // Cookie read failed; keep SHOOT_USER
+      }
       return {
         id: user.id,
         email: user.email ?? undefined,
-        role: "SHOOT_USER" as Role,
+        role,
         teamIds: [],
         shootTeamIds: [],
         opsWarehouseIds: [],
