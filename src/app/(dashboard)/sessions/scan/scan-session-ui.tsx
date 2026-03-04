@@ -41,8 +41,11 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
   const [cancelPending, setCancelPending] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const lastKeyTimeRef = useRef(0);
-  const SCANNER_MS = 80;
+  const lastInputTimeRef = useRef(0);
+  const prevLenRef = useRef(0);
+  const scanningRef = useRef(false);
+  /** Max ms between key events to treat as scanner (not human typing). Barcode scanners are typically <10ms. */
+  const SCANNER_THRESHOLD_MS = 20;
 
   function handleStartSession() {
     setMessage(null);
@@ -73,9 +76,13 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
         if (isDuplicate) {
           setMessage(result.data?.message ?? "Serial already scanned in this session");
           setScanInput("");
+          prevLenRef.current = 0;
+          scanningRef.current = false;
         } else {
           setItems((prev) => [...prev, { sessionId, serialId: scanInput.trim(), scanStatus: result.data!.scanStatus ?? "OK", errorReason: result.data?.errorReason ?? null }]);
           setScanInput("");
+          prevLenRef.current = 0;
+          scanningRef.current = false;
           setMessage(result.data?.ok === false ? (result.data?.message ?? "Error") : null);
         }
       } else {
@@ -123,29 +130,63 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
   const okCount = items.filter((i) => i.scanStatus !== "ERROR").length;
   const errCount = items.filter((i) => i.scanStatus === "ERROR").length;
 
+  function onScanInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const el = e.currentTarget;
+    const newVal = el.value;
+    const now = Date.now();
+    const prevLen = prevLenRef.current;
+    const delta = newVal.length - prevLen;
+
+    if (delta >= 2) {
+      // Burst of 2+ chars in one event = scanner
+      scanningRef.current = true;
+      setScanInput(newVal);
+      prevLenRef.current = newVal.length;
+    } else if (delta === 1) {
+      if (prevLen === 0) {
+        // First character: allow but don't confirm scanner yet
+        setScanInput(newVal);
+        prevLenRef.current = newVal.length;
+      } else if (now - lastInputTimeRef.current <= SCANNER_THRESHOLD_MS) {
+        // Second+ character within threshold = scanner
+        scanningRef.current = true;
+        setScanInput(newVal);
+        prevLenRef.current = newVal.length;
+      } else {
+        // Single char, too slow = typing; clear immediately
+        setScanInput("");
+        prevLenRef.current = 0;
+        scanningRef.current = false;
+        if (el) el.value = "";
+        toast("Use barcode scanner only; manual typing is not allowed.", { variant: "error" });
+      }
+    } else if (delta < 0) {
+      // Backspace
+      if (scanningRef.current) {
+        setScanInput(newVal);
+        prevLenRef.current = newVal.length;
+      } else {
+        setScanInput("");
+        prevLenRef.current = 0;
+      }
+    }
+    lastInputTimeRef.current = now;
+  }
+
   function onScanKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddScan();
-      return;
-    }
-    if (e.key === "Backspace") {
-      e.preventDefault();
-      setScanInput((prev) => prev.slice(0, -1));
-      lastKeyTimeRef.current = Date.now();
+      setScanInput("");
+      prevLenRef.current = 0;
+      scanningRef.current = false;
       return;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) {
       e.preventDefault();
       return;
     }
-    if (e.key.length === 1) {
-      e.preventDefault();
-      const now = Date.now();
-      const isFast = now - lastKeyTimeRef.current <= SCANNER_MS;
-      lastKeyTimeRef.current = now;
-      setScanInput((prev) => (isFast ? prev + e.key : e.key));
-    }
+    // Let single chars and Backspace reach the input so onInput can apply scanner rules
   }
 
   return (
@@ -189,7 +230,7 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
               <input
                 type="text"
                 value={scanInput}
-                onChange={() => {}}
+                onChange={onScanInput}
                 onKeyDown={onScanKeyDown}
                 onPaste={(e) => {
                   e.preventDefault();
