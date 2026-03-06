@@ -78,3 +78,11 @@ export async function removeTeamMember(tx: Tx, teamId: string, userId: string) {
     .delete(teamMembers)
     .where(and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, userId)));
 }
+
+/** Replace all team memberships for a user (used by admin to assign warehouses/shoot teams). */
+export async function setUserTeams(tx: Tx, userId: string, teamIds: string[]) {
+  await tx.delete(teamMembers).where(eq(teamMembers.userId, userId));
+  for (const teamId of teamIds) {
+    await tx.insert(teamMembers).values({ teamId, userId }).onConflictDoNothing();
+  }
+}

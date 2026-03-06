@@ -138,3 +138,46 @@ export async function adminRemoveTeamMember(teamId: string, userId: string) {
     return { error: e instanceof Error ? e.message : "Failed to remove member" };
   }
 }
+
+export type UserTeamRow = { id: string; name: string; type: string; warehouseId: string | null; warehouseName: string | null };
+
+/** Get a user's teams with warehouse names (for admin "Assign warehouse / shoot team" UI). */
+export async function adminGetUserTeams(userId: string): Promise<{ error: string | null; teams: UserTeamRow[] }> {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") {
+    return { error: "Forbidden", teams: [] };
+  }
+  try {
+    const db = getDb();
+    const teamIds = await teamRepo.teamIdsByUserId(db, userId);
+    if (teamIds.length === 0) return { error: null, teams: [] };
+    const teamRows = await teamRepo.teamsByIds(db, teamIds);
+    const warehouses = await warehouseRepo.listWarehouses(db);
+    const whMap = new Map(warehouses.map((w) => [w.id, w.name]));
+    const teams: UserTeamRow[] = (teamRows as { id: string; name: string; type: string; warehouseId: string | null }[]).map((t) => ({
+      id: t.id,
+      name: t.name,
+      type: t.type,
+      warehouseId: t.warehouseId,
+      warehouseName: t.warehouseId ? whMap.get(t.warehouseId) ?? null : null,
+    }));
+    return { error: null, teams };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to load teams", teams: [] };
+  }
+}
+
+/** Set a user's team memberships (replaces all). Used to assign OPS user to warehouses / Shoot user to shoot teams. */
+export async function adminSetUserTeams(userId: string, teamIds: string[]): Promise<{ error: string | null }> {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") {
+    return { error: "Forbidden" };
+  }
+  try {
+    const db = getDb();
+    await db.transaction(async (tx) => teamRepo.setUserTeams(tx, userId, teamIds));
+    return { error: null };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to update assignments" };
+  }
+}

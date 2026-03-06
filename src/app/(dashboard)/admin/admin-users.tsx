@@ -7,6 +7,13 @@ import {
   adminUpdateUserRole,
   adminDeleteUser,
 } from "@/app/actions/auth-actions";
+import {
+  adminListTeams,
+  adminListWarehouses,
+  adminGetUserTeams,
+  adminSetUserTeams,
+  type UserTeamRow,
+} from "@/app/actions/team-actions";
 import type { Role } from "@/lib/validations";
 import { useToast } from "@/components/ui/toaster";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -24,6 +31,9 @@ type UserRow = {
   createdAt: string;
 };
 
+type TeamRow = { id: string; name: string; type: string; warehouseId: string | null; createdAt?: Date };
+type WarehouseRow = { id: string; code: string; name: string };
+
 export function AdminUsers() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [listError, setListError] = useState<string | null>(null);
@@ -39,7 +49,16 @@ export function AdminUsers() {
   const [deleteTarget, setDeleteTarget] = useState<{ userId: string; email: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const [teams, setTeams] = useState<TeamRow[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseRow[]>([]);
+  const [assignTarget, setAssignTarget] = useState<{ userId: string; email: string; role: string } | null>(null);
+  const [assignUserTeams, setAssignUserTeams] = useState<UserTeamRow[]>([]);
+  const [assignSelectedIds, setAssignSelectedIds] = useState<string[]>([]);
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [assignSaving, setAssignSaving] = useState(false);
+
   const { toast } = useToast();
+  const whMap = new Map(warehouses.map((w) => [w.id, w.name]));
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -56,6 +75,50 @@ export function AdminUsers() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    (async () => {
+      const [tRes, wRes] = await Promise.all([adminListTeams(), adminListWarehouses()]);
+      if (!tRes.error) setTeams((tRes.teams || []) as TeamRow[]);
+      if (!wRes.error) setWarehouses((wRes.warehouses || []) as WarehouseRow[]);
+    })();
+  }, []);
+
+  async function openAssignModal(userId: string, email: string, role: string) {
+    setAssignTarget({ userId, email, role });
+    setAssignLoading(true);
+    const res = await adminGetUserTeams(userId);
+    setAssignLoading(false);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    setAssignUserTeams(res.teams);
+    setAssignSelectedIds(res.teams.map((t) => t.id));
+  }
+
+  function closeAssignModal() {
+    setAssignTarget(null);
+  }
+
+  function toggleAssignTeam(teamId: string) {
+    setAssignSelectedIds((prev) =>
+      prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId]
+    );
+  }
+
+  async function handleSaveAssign() {
+    if (!assignTarget) return;
+    setAssignSaving(true);
+    const res = await adminSetUserTeams(assignTarget.userId, assignSelectedIds);
+    setAssignSaving(false);
+    if (res.error) {
+      toast(res.error, { variant: "error" });
+      return;
+    }
+    toast("Assignments updated", { variant: "success" });
+    closeAssignModal();
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -194,6 +257,7 @@ export function AdminUsers() {
               <tr className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
                 <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Email</th>
                 <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Role</th>
+                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Assign</th>
                 <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Created</th>
                 <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300 w-12"></th>
               </tr>
@@ -215,6 +279,15 @@ export function AdminUsers() {
                       ))}
                     </select>
                   </td>
+                  <td className="px-5 py-3.5">
+                    <button
+                      type="button"
+                      onClick={() => openAssignModal(u.id, u.email, u.role)}
+                      className="rounded-lg border border-zinc-300 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                    >
+                      {u.role === "OPS_USER" ? "Warehouses" : u.role === "SHOOT_USER" ? "Shoot teams" : "Teams"}
+                    </button>
+                  </td>
                   <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
@@ -233,6 +306,98 @@ export function AdminUsers() {
           </table>
         )}
       </div>
+
+      {assignTarget && (
+        <>
+          <div className="fixed inset-0 z-40 bg-zinc-900/50" aria-hidden onClick={closeAssignModal} />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                {assignTarget.role === "OPS_USER"
+                  ? "Assign warehouses (Ops teams)"
+                  : assignTarget.role === "SHOOT_USER"
+                    ? "Assign shoot teams"
+                    : "Assign teams"}
+              </h3>
+              <button
+                type="button"
+                onClick={closeAssignModal}
+                className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                aria-label="Close"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
+              {assignTarget.email} — select which teams give access to tasks.
+            </p>
+            {assignLoading ? (
+              <p className="py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
+            ) : (
+              <>
+              <ul className="mb-4 max-h-64 space-y-2 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-600">
+                {(assignTarget.role === "OPS_USER"
+                  ? teams.filter((t) => t.type === "OPS")
+                  : assignTarget.role === "SHOOT_USER"
+                    ? teams.filter((t) => t.type === "SHOOT")
+                    : teams
+                ).map((t) => (
+                  <li
+                    key={t.id}
+                    className="flex items-center gap-3 border-b border-zinc-100 px-3 py-2.5 last:border-0 dark:border-zinc-700"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`assign-${t.id}`}
+                      checked={assignSelectedIds.includes(t.id)}
+                      onChange={() => toggleAssignTeam(t.id)}
+                      className="h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-800"
+                    />
+                    <label htmlFor={`assign-${t.id}`} className="flex-1 cursor-pointer text-sm text-zinc-900 dark:text-zinc-100">
+                      {t.name}
+                      {t.type === "OPS" && t.warehouseId && (
+                        <span className="ml-1.5 text-zinc-500 dark:text-zinc-400">
+                          (Warehouse: {whMap.get(t.warehouseId) ?? t.warehouseId})
+                        </span>
+                      )}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+              {(assignTarget.role === "OPS_USER"
+                ? teams.filter((t) => t.type === "OPS")
+                : assignTarget.role === "SHOOT_USER"
+                  ? teams.filter((t) => t.type === "SHOOT")
+                  : teams
+              ).length === 0 && (
+                <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+                  No {assignTarget.role === "OPS_USER" ? "Ops" : assignTarget.role === "SHOOT_USER" ? "Shoot" : ""} teams yet. Create them in Admin → Teams first.
+                </p>
+              )}
+              </>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeAssignModal}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAssign}
+                disabled={assignSaving || assignLoading}
+                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60 dark:focus:ring-offset-zinc-800"
+              >
+                {assignSaving ? "Saving…" : "Save"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <ConfirmDialog
         open={deleteTarget !== null}
