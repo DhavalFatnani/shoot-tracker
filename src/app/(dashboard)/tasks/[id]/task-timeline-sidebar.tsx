@@ -1,4 +1,5 @@
 import { getTaskTimelineEntryClass } from "@/lib/activity-event-labels";
+import { formatDateTimeIST } from "@/lib/format-date";
 
 export type TimelineEntry = {
   id: string;
@@ -43,7 +44,7 @@ export function TaskTimelineSidebar({ timeline }: { timeline: TimelineEntry[] })
                       <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{entry.detail}</p>
                     )}
                     <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                      {new Date(entry.at).toLocaleString()}
+                      {formatDateTimeIST(entry.at)}
                     </p>
                   </div>
                 </li>

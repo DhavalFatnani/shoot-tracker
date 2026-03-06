@@ -134,7 +134,7 @@ export async function createReturn(
 
   const summary: { taskId: string; taskName: string | null; taskSerial: number; count: number; sessionId: string }[] = [];
 
-  const returnTaskName = `Return ${new Date().toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}`;
+  const returnTaskName = `Return ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "short", timeStyle: "short", hour12: false })}`;
 
   let returnId: string | null = null;
   await db.transaction(async (tx) => {

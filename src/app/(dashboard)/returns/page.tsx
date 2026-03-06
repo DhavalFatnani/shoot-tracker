@@ -5,6 +5,7 @@ import { listReturns } from "@/app/actions/return-actions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ReturnsEmptyState } from "@/components/empty-state";
 import { formatReturnSerial } from "@/lib/format-serials";
+import { formatDateTimeIST } from "@/lib/format-date";
 
 const PAGE_SIZE = 20;
 
@@ -108,7 +109,7 @@ export default async function ReturnsPage({
                 <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300">{r.totalSerials}</td>
                 <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300">{r.taskCount}</td>
                 <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">
-                  {r.createdAt ? new Date(r.createdAt).toLocaleString() : "—"}
+                  {formatDateTimeIST(r.createdAt)}
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   <Link

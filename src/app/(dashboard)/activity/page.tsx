@@ -4,6 +4,7 @@ import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { listActivityLogs } from "@/app/actions/activity-actions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatTaskSerial } from "@/lib/format-serials";
+import { formatDateTimeIST } from "@/lib/format-date";
 import { getEventLabel, getEventColor } from "@/lib/activity-event-labels";
 
 const PAGE_SIZE = 30;
@@ -80,7 +81,7 @@ export default async function ActivityLogsPage({
             {list.map((row) => (
               <ClickableTableRow key={row.id} href={`/tasks/${row.taskId}`}>
                 <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
-                  {new Date(row.createdAt).toLocaleString()}
+                  {formatDateTimeIST(row.createdAt)}
                 </td>
                 <td className="px-5 py-3.5">
                   <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getEventColor(row.eventType)}`}>

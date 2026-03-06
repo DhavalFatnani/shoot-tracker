@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getReturn } from "@/app/actions/return-actions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatTaskSerial, formatReturnSerial } from "@/lib/format-serials";
+import { formatDateTimeIST } from "@/lib/format-date";
 import { ReturnDispatchButton } from "./return-dispatch-button";
 
 export default async function ReturnDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,9 +26,9 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
   }
 
   const data = result.data;
-  const createdDate = data.createdAt ? new Date(data.createdAt).toLocaleString() : "—";
-  const dispatchedDate = data.dispatchedAt ? new Date(data.dispatchedAt).toLocaleString() : null;
-  const closedDate = data.closedAt ? new Date(data.closedAt).toLocaleString() : null;
+  const createdDate = formatDateTimeIST(data.createdAt);
+  const dispatchedDate = data.dispatchedAt ? formatDateTimeIST(data.dispatchedAt) : null;
+  const closedDate = data.closedAt ? formatDateTimeIST(data.closedAt) : null;
   const isOpsOrAdmin = session.role === "OPS_USER" || session.role === "ADMIN";
   const isShootOrAdmin = session.role === "SHOOT_USER" || session.role === "ADMIN";
   const createdByYou = data.createdBy === session.id;

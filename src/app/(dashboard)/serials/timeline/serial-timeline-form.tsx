@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSerialTimeline } from "@/app/actions/serial-actions";
 import { listTasksForSerial } from "@/app/actions/task-actions";
 import { formatTaskSerial } from "@/lib/format-serials";
+import { formatDateTimeIST } from "@/lib/format-date";
 
 const EVENT_COLORS: Record<string, string> = {
   PICK: "bg-blue-100 text-blue-700",
@@ -147,7 +148,7 @@ export function SerialTimelineForm({ canRaiseDispute }: { canRaiseDispute: boole
                   </td>
                   <td className="px-5 py-3 text-slate-700">{ev.fromLocation}</td>
                   <td className="px-5 py-3 text-slate-700">{ev.toLocation}</td>
-                  <td className="px-5 py-3 text-slate-500">{ev.createdAt != null ? (typeof ev.createdAt === "string" ? new Date(ev.createdAt).toLocaleString() : ev.createdAt.toLocaleString()) : ""}</td>
+                  <td className="px-5 py-3 text-slate-500">{formatDateTimeIST(ev.createdAt)}</td>
                 </tr>
               ))}
             </tbody>

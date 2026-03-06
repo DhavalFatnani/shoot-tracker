@@ -6,9 +6,15 @@ const globalForDb = globalThis as unknown as { _db?: ReturnType<typeof drizzle> 
 
 function initDb() {
   if (globalForDb._db) return globalForDb._db;
-  const connectionString = process.env.DATABASE_URL;
+  let connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set. Set it in Vercel Environment Variables.");
+  }
+  // Use IST only: set session timezone so now() and timestamp display are Asia/Kolkata.
+  // (Some poolers may ignore this; app formatting uses Asia/Kolkata regardless.)
+  const sep = connectionString.includes("?") ? "&" : "?";
+  if (!connectionString.includes("TimeZone") && !connectionString.includes("timezone")) {
+    connectionString = `${connectionString}${sep}options=-c%20TimeZone%3DAsia%2FKolkata`;
   }
   // Keep 1 connection per serverless instance to avoid exhausting pooler (MaxClientsInSessionMode).
   // If using Supabase/Neon pooler, prefer the Transaction-mode URL so the pooler can multiplex.

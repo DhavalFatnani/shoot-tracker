@@ -7,6 +7,7 @@ import { getTaskStatusClass, getTaskStatusLabel } from "@/lib/status-colors";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { TasksEmptyState } from "@/components/empty-state";
 import { formatTaskSerial } from "@/lib/format-serials";
+import { formatDateTimeIST } from "@/lib/format-date";
 
 const PAGE_SIZE = 20;
 const STATUS_OPTIONS = [
@@ -110,7 +111,7 @@ export default async function TasksPage({
                     {getTaskStatusLabel(t.status)}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{t.createdAt?.toLocaleString()}</td>
+                <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{formatDateTimeIST(t.createdAt)}</td>
                 <td className="px-5 py-3.5 text-right">
                   <Link
                     href={`/tasks/${t.id}`}

@@ -84,7 +84,7 @@ export async function createRequest(
     const team = await teamRepo.teamById(tx, input.shootTeamId);
     const teamName = team?.name ?? "Team";
     const reasonLabel = SHOOT_REASON_LABELS[input.shootReason as ShootReason] ?? input.shootReason;
-    const dateStr = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const dateStr = new Date().toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric" });
     const taskName = `${reasonLabel} · ${teamName} · ${allEligible.length} units · ${dateStr}`;
 
     const nonReturnMap = new Map(

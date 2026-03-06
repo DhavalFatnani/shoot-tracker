@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { getBufferAgingList } from "@/app/actions/buffer-actions";
+import { formatDateTimeIST } from "@/lib/format-date";
 
 type Item = { serialId: string; sku: string; currentLocation: string; updatedAt: Date | string; daysInBuffer: number };
 
@@ -90,7 +91,7 @@ export function BufferAgingTable({ initialItems }: { initialItems: Item[] }) {
                 <td className="px-5 py-3 text-zinc-700 dark:text-zinc-200">{i.sku}</td>
                 <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">{i.currentLocation}</td>
                 <td className={`px-5 py-3 ${daysColor(i.daysInBuffer)}`}>{i.daysInBuffer}d</td>
-                <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">{typeof i.updatedAt === "string" ? new Date(i.updatedAt).toLocaleString() : i.updatedAt.toLocaleString()}</td>
+                <td className="px-5 py-3 text-zinc-500 dark:text-zinc-400">{formatDateTimeIST(i.updatedAt)}</td>
               </tr>
             ))}
           </tbody>

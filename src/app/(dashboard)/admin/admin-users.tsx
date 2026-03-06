@@ -15,6 +15,7 @@ import {
   type UserTeamRow,
 } from "@/app/actions/team-actions";
 import type { Role } from "@/lib/validations";
+import { formatDateIST } from "@/lib/format-date";
 import { useToast } from "@/components/ui/toaster";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -289,7 +290,7 @@ export function AdminUsers() {
                     </button>
                   </td>
                   <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">
-                    {new Date(u.createdAt).toLocaleDateString()}
+                    {formatDateIST(u.createdAt)}
                   </td>
                   <td className="px-5 py-3.5">
                     <button
