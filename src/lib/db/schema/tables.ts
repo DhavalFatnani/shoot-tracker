@@ -77,7 +77,7 @@ export const tasks = pgTable("tasks", {
     .references(() => warehouses.id),
   status: taskStatusEnum("status").notNull().default("PICKING_PENDING"),
   dispatchTime: timestamp("dispatch_time", { withTimezone: true }),
-  /** Locked at OPS dispatch: Received count */
+  /** Locked at OPS dispatch: Received count (legacy; at dispatch received is 0) */
   dispatchReceived: integer("dispatch_received"),
   /** Locked at OPS dispatch: Sold count */
   dispatchSold: integer("dispatch_sold"),
@@ -85,6 +85,10 @@ export const tasks = pgTable("tasks", {
   dispatchNotFound: integer("dispatch_not_found"),
   /** Locked at OPS dispatch: QC Fail count */
   dispatchQcFail: integer("dispatch_qc_fail"),
+  /** Locked at OPS dispatch: Pending action (REQUESTED) count */
+  dispatchPendingAction: integer("dispatch_pending_action"),
+  /** Locked at OPS dispatch: Packed (PACKED + PICKED) count */
+  dispatchPacked: integer("dispatch_packed"),
   createdBy: uuid("created_by").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

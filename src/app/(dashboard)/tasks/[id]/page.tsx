@@ -194,14 +194,12 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             </div>
           </div>
           {task.dispatchTime != null &&
-            (task.dispatchReceived != null || task.dispatchSold != null || task.dispatchNotFound != null || task.dispatchQcFail != null) && (
+            (task.dispatchPendingAction != null || task.dispatchPacked != null) && (
               <div className="mt-3 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800/50">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Locked at dispatch</p>
                 <div className="mt-1.5 flex flex-wrap gap-3 text-sm">
-                  <span className="text-zinc-700 dark:text-zinc-300">Received <strong>{task.dispatchReceived ?? 0}</strong></span>
-                  <span className="text-zinc-700 dark:text-zinc-300">Sold <strong>{task.dispatchSold ?? 0}</strong></span>
-                  <span className="text-zinc-700 dark:text-zinc-300">Not found <strong>{task.dispatchNotFound ?? 0}</strong></span>
-                  <span className="text-zinc-700 dark:text-zinc-300">QC fail <strong>{task.dispatchQcFail ?? 0}</strong></span>
+                  <span className="text-zinc-700 dark:text-zinc-300">Pending action <strong>{task.dispatchPendingAction ?? 0}</strong></span>
+                  <span className="text-zinc-700 dark:text-zinc-300">Packed <strong>{task.dispatchPacked ?? 0}</strong></span>
                 </div>
               </div>
             )}

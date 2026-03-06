@@ -23,6 +23,7 @@
     { "idx": 18, "version": "7", "when": 1773100008500, "tag": "0011_request_event_type", "breakpoints": true },
     { "idx": 19, "version": "7", "when": 1773100009000, "tag": "0012_location_qc_fail", "breakpoints": true },
     { "idx": 20, "version": "7", "when": 1773100009500, "tag": "0020_profiles_first_last_name", "breakpoints": true },
-    { "idx": 21, "version": "7", "when": 1773100010000, "tag": "0021_performance_indexes", "breakpoints": true }
+    { "idx": 21, "version": "7", "when": 1773100010000, "tag": "0021_performance_indexes", "breakpoints": true },
+    { "idx": 22, "version": "7", "when": 1773100010500, "tag": "0022_dispatch_pending_packed", "breakpoints": true }
   ]
 }

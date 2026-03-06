@@ -395,13 +395,15 @@ export async function bulkDispatch(
 
   const serialIds = packedSerials.map(s => s.serialId);
 
-  // Lock Received, Sold, Not Found, QC Fail at dispatch (current counts for this task)
+  // Lock counts at dispatch (current counts for this task)
   const countsMap = await taskSerialRepo.taskSerialCountsByStatus(db, taskId);
   const receivedLock =
     (countsMap.get("RECEIVED") ?? 0) + (countsMap.get("RETURN_CREATED") ?? 0);
   const soldLock = countsMap.get("SOLD") ?? 0;
   const notFoundLock = countsMap.get("NOT_FOUND") ?? 0;
   const qcFailLock = countsMap.get("QC_FAIL") ?? 0;
+  const pendingActionLock = countsMap.get("REQUESTED") ?? 0;
+  const packedLock = (countsMap.get("PACKED") ?? 0) + (countsMap.get("PICKED") ?? 0);
 
   await db.transaction(async (tx) => {
     // Lock and validate: every serial must be at WH_ before we can emit PICK (WH_ → TRANSIT).
@@ -425,6 +427,8 @@ export async function bulkDispatch(
         dispatchSold: soldLock,
         dispatchNotFound: notFoundLock,
         dispatchQcFail: qcFailLock,
+        dispatchPendingAction: pendingActionLock,
+        dispatchPacked: packedLock,
       })
       .where(eq(tasks.id, taskId));
 
