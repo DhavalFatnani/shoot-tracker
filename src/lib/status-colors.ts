@@ -37,8 +37,10 @@ export function getTaskStatusLabel(status: string): string {
 }
 
 /** Use when verify scan is already closed but task is not yet closed (shows "Task closure pending" instead of "Verifying"). */
-export function getTaskStatusDisplayLabel(status: string, verifyScanClosed?: boolean): string {
+/** When hasReceivedSerials is true and status is PICKING, show "Receiving" (receive scan has run; "Pick in progress" is wrong). */
+export function getTaskStatusDisplayLabel(status: string, verifyScanClosed?: boolean, hasReceivedSerials?: boolean): string {
   if (status === "VERIFYING" && verifyScanClosed) return "Task closure pending";
+  if (status === "PICKING" && hasReceivedSerials) return "Receiving";
   return getTaskStatusLabel(status);
 }
 

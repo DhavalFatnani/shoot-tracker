@@ -1,4 +1,9 @@
 {
   "/icon/route": "app/icon/route.js",
-  "/(dashboard)/tasks/[id]/page": "app/(dashboard)/tasks/[id]/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(dashboard)/returns/[id]/page": "app/(dashboard)/returns/[id]/page.js",
+  "/(dashboard)/tasks/page": "app/(dashboard)/tasks/page.js",
+  "/(dashboard)/returns/page": "app/(dashboard)/returns/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(auth)/sign-in/page": "app/(auth)/sign-in/page.js"
 }

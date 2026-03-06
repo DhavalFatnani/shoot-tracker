@@ -4,7 +4,7 @@ import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { LinkWithStopPropagation } from "@/components/ui/link-with-stop-propagation";
 import { listTasks } from "@/app/actions/task-actions";
 import { TasksListFilters } from "./tasks-list-filters";
-import { getTaskStatusClass, getTaskStatusLabel } from "@/lib/status-colors";
+import { getTaskStatusClass, getTaskStatusDisplayLabel } from "@/lib/status-colors";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { TasksEmptyState } from "@/components/empty-state";
 import { formatTaskSerial } from "@/lib/format-serials";
@@ -44,9 +44,12 @@ export default async function TasksPage({
     if (q) formData.set("q", q);
 
     const result = await listTasks(formData);
-    const rawTasks = result.success && result.data ? result.data : [];
+    const data = result.success && result.data ? result.data : null;
+    const rawTasks = data?.tasks ?? [];
+    const receivedTaskIds = data?.receivedTaskIds ?? [];
     const hasNext = rawTasks.length > PAGE_SIZE;
     const tasks = rawTasks.slice(0, PAGE_SIZE);
+    const receivedSet = new Set(receivedTaskIds);
 
     return (
     <div className="space-y-6">
@@ -109,8 +112,8 @@ export default async function TasksPage({
                   )}
                 </td>
                 <td className="px-5 py-3.5">
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTaskStatusClass(t.status)}`}>
-                    {getTaskStatusLabel(t.status)}
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTaskStatusClass(t.status === "PICKING" && receivedSet.has(t.id) ? "RECEIVING" : t.status)}`}>
+                    {getTaskStatusDisplayLabel(t.status, false, receivedSet.has(t.id))}
                   </span>
                 </td>
                 <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{formatDateTimeIST(t.createdAt)}</td>

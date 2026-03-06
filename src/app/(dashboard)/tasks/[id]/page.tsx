@@ -53,7 +53,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const taskLabel = task.name ?? `Task ${formatTaskSerial(task.serial)}`;
   const shootReasonLabel = task.shootReason === "INHOUSE_SHOOT" ? "Inhouse Shoot" : task.shootReason === "AGENCY_SHOOT" ? "Agency Shoot" : task.shootReason === "INFLUENCER_FITS" ? "Influencer Fits" : task.shootReason;
 
-  const statusMessage = balanceSatisfied
+  const hasReturnableItems = balance.received > 0 || balance.returned > 0 || balance.returnInTransit > 0;
+  const returnVerified = timeline.some((e) => e.type === "return-verify");
+  const readyToClose = balanceSatisfied && (!hasReturnableItems || returnVerified);
+
+  const statusMessage = readyToClose
     ? { label: "Ready to close", class: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200" }
     : balance.inTransit === 0 && balance.received === 0 && balance.sold === 0 && balance.notFound === 0
       ? { label: "Awaiting dispatch", class: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200" }
@@ -92,9 +96,15 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                 {formatTaskSerial(task.serial)}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${getTaskStatusClass(task.status)}`}>
-                  {getTaskStatusDisplayLabel(task.status, timeline.some((e) => e.type === "return-verify"))}
-                </span>
+                {(() => {
+                  const hasReceived = balance.received > 0 || timeline.some((e) => e.type === "receipt");
+                  const displayStatus = task.status === "PICKING" && hasReceived ? "RECEIVING" : task.status;
+                  return (
+                    <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${getTaskStatusClass(displayStatus)}`}>
+                      {getTaskStatusDisplayLabel(task.status, timeline.some((e) => e.type === "return-verify"), hasReceived)}
+                    </span>
+                  );
+                })()}
                 {task.shootReason && (
                   <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-700 dark:bg-violet-900/50 dark:text-violet-200">
                     {shootReasonLabel}
@@ -115,7 +125,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                 <MarkReceivedButton taskId={task.id} />
               )}
               {(session.role === "ADMIN" || session.role === "OPS_USER") && task.status !== "CLOSED" && (
-                <CloseTaskButton taskId={task.id} disabled={!balanceSatisfied || disputes.some((d) => d.status === "OPEN")} />
+                <CloseTaskButton taskId={task.id} disabled={!readyToClose || disputes.some((d) => d.status === "OPEN")} />
               )}
             </div>
           </div>
@@ -139,7 +149,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                 Balance
               </h2>
               <span
-                className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${balanceSatisfied ? "bg-teal-100 text-teal-800 ring-teal-200 dark:bg-teal-900/40 dark:text-teal-200 dark:ring-teal-800" : "bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:ring-amber-800"}`}
+                className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${readyToClose ? "bg-teal-100 text-teal-800 ring-teal-200 dark:bg-teal-900/40 dark:text-teal-200 dark:ring-teal-800" : "bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:ring-amber-800"}`}
               >
                 {balanceHint}
               </span>

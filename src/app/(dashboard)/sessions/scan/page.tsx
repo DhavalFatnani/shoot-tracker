@@ -23,8 +23,8 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
     const formData = new FormData();
     formData.set("limit", "50");
     const result = await listTasks(formData);
-    if (result.success && result.data) {
-      tasksForPicker = result.data
+    if (result.success && result.data?.tasks) {
+      tasksForPicker = result.data.tasks
         .filter((t) => t.status !== "CLOSED")
         .map((t) => ({
           id: t.id,

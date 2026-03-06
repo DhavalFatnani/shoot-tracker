@@ -6,6 +6,7 @@ import * as taskSerialRepo from "@/lib/repositories/task-serial-repository";
 import * as serialRegistryRepo from "@/lib/repositories/serial-registry-repository";
 import * as serialStateRepo from "@/lib/repositories/serial-current-state-repository";
 import * as disputeRepo from "@/lib/repositories/dispute-repository";
+import * as sessionRepo from "@/lib/repositories/session-repository";
 import * as teamRepo from "@/lib/repositories/team-repository";
 import * as eventRepo from "@/lib/repositories/event-repository";
 import {
@@ -156,6 +157,16 @@ export async function closeTask(taskId: string, userId: string, userRole: Role, 
     throw new InvariantViolationError(`Cannot close task: ${openDisputes.length} open dispute(s)`);
   }
 
+  const hasReturnableItems = counts.received > 0 || counts.returned > 0 || counts.returnInTransit > 0;
+  if (hasReturnableItems) {
+    const returnVerified = await sessionRepo.taskHasReturnVerify(db, taskId);
+    if (!returnVerified) {
+      throw new InvariantViolationError(
+        "Cannot close task: task has returnable items but return has not been verified. Run a return-verify scan for this task."
+      );
+    }
+  }
+
   await db.transaction(async (tx) => {
     await taskRepo.closeTask(tx, taskId);
   });
@@ -192,7 +203,7 @@ export async function listTasks(
   const db = getDb();
   const teamIds = Array.isArray(shootTeamIds) ? shootTeamIds : [];
   const warehouseIds = Array.isArray(opsWarehouseIds) ? opsWarehouseIds : [];
-  return taskRepo.listTasks(db, {
+  const tasks = await taskRepo.listTasks(db, {
     isAdmin: userRole === "ADMIN",
     shootTeamIds: teamIds,
     opsWarehouseIds: warehouseIds,
@@ -201,6 +212,9 @@ export async function listTasks(
     offset: options.offset ?? 0,
     q: options.q,
   });
+  const taskIds = tasks.map((t) => t.id);
+  const receivedTaskIds = await taskSerialRepo.taskIdsWithReceivedSerials(db, taskIds);
+  return { tasks, receivedTaskIds };
 }
 
 /** Tasks that contain this serial and are visible to the user (for serial timeline "Raise dispute"). */

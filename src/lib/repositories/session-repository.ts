@@ -76,3 +76,15 @@ export function committedSessionsByTaskId(db: Database | Tx, taskId: string) {
     .where(and(eq(sessions.taskId, taskId), eq(sessions.status, "COMMITTED")))
     .orderBy(desc(sessions.committedAt));
 }
+
+/** Whether the task has at least one committed RETURN_VERIFY session (return verified). */
+export async function taskHasReturnVerify(db: Database | Tx, taskId: string): Promise<boolean> {
+  const rows = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(
+      and(eq(sessions.taskId, taskId), eq(sessions.status, "COMMITTED"), eq(sessions.type, "RETURN_VERIFY"))
+    )
+    .limit(1);
+  return rows.length > 0;
+}

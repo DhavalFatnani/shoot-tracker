@@ -122,7 +122,7 @@ export async function getActivityLogs(
   const limit = Math.min(100, Math.max(1, options.limit ?? 30));
   const offset = Math.max(0, options.offset ?? 0);
 
-  const visibleTasks = await taskService.listTasks(
+  const { tasks: visibleTasks } = await taskService.listTasks(
     "",
     userRole,
     shootTeamIds,

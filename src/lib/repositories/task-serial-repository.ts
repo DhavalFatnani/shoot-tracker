@@ -17,6 +17,16 @@ export async function countRequestedSerialsForTaskIds(db: Database | Tx, taskIds
   return rows[0]?.count ?? 0;
 }
 
+/** Task IDs (from the given list) that have at least one serial RECEIVED or RETURN_CREATED (for display: don't show "Pick in progress"). */
+export async function taskIdsWithReceivedSerials(db: Database | Tx, taskIds: string[]): Promise<string[]> {
+  if (taskIds.length === 0) return [];
+  const rows = await db
+    .selectDistinct({ taskId: taskSerials.taskId })
+    .from(taskSerials)
+    .where(and(inArray(taskSerials.taskId, taskIds), inArray(taskSerials.status, ["RECEIVED", "RETURN_CREATED"])));
+  return rows.map((r) => r.taskId);
+}
+
 export async function taskSerialCountsByStatus(db: Database | Tx, taskId: string): Promise<Map<TaskSerialStatus, number>> {
   const rows = await db
     .select({ status: taskSerials.status, count: sql<number>`count(*)::int` })

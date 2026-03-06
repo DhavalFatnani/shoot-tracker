@@ -13,7 +13,8 @@ export default async function DisputesPage() {
 
   const formData = new FormData();
   const tasksResult = await listTasks(formData);
-  const tasks = tasksResult.success && tasksResult.data ? tasksResult.data : [];
+  const data = tasksResult.success && tasksResult.data ? tasksResult.data : null;
+  const tasks = data?.tasks ?? [];
   const taskIds = tasks.map((t) => t.id);
   const disputesResult =
     taskIds.length > 0
