@@ -19,6 +19,8 @@ type InventoryItem = {
   currentLocation: string;
   status: string;
   receivedAt: string | Date | null;
+  returnable?: string;
+  nonReturnReason?: string | null;
 };
 
 type ScanEntry = {
@@ -60,6 +62,8 @@ export function CreateReturnUI({ initialInventory }: { initialInventory: Invento
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ returnId?: string; totalReturned: number; summary: { taskId: string; taskName: string | null; taskSerial: number; count: number }[] } | null>(null);
   const [partialConfirmOpen, setPartialConfirmOpen] = useState(false);
+  const [nonReturnableConfirmOpen, setNonReturnableConfirmOpen] = useState(false);
+  const [pendingNonReturnable, setPendingNonReturnable] = useState<{ serialId: string; item: InventoryItem } | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const lastInputTimeRef = useRef(0);
   const prevLenRef = useRef(0);
@@ -126,7 +130,7 @@ export function CreateReturnUI({ initialInventory }: { initialInventory: Invento
     return map;
   }, [byTask, scannedByTask, scannedSet]);
 
-  /** Process a scanned serial: validate, check inventory, add to scanned list. */
+  /** Process a scanned serial: validate, check inventory, add to scanned list. If non-returnable, ask for confirmation first. */
   function processSerial(serialId: string) {
     if (!SERIAL_DIGITS_ONLY.test(serialId)) {
       toast("Serial must be exactly 10 digits.", { variant: "error" });
@@ -143,9 +147,18 @@ export function CreateReturnUI({ initialInventory }: { initialInventory: Invento
       toast("Not in shoot inventory", { variant: "error" });
       return;
     }
+    if (item.returnable === "0") {
+      setPendingNonReturnable({ serialId, item });
+      setNonReturnableConfirmOpen(true);
+      return;
+    }
+    addScannedEntry(item);
+  }
+
+  function addScannedEntry(item: InventoryItem) {
     setScanned((prev) => [
       ...prev,
-      { serialId, ok: true, taskId: item.taskId, taskSerial: item.taskSerial, taskName: item.taskName, sku: item.sku },
+      { serialId: item.serialId, ok: true, taskId: item.taskId, taskSerial: item.taskSerial, taskName: item.taskName, sku: item.sku },
     ]);
   }
 
@@ -557,6 +570,34 @@ export function CreateReturnUI({ initialInventory }: { initialInventory: Invento
               Cancel
             </button>
           </div>
+
+          {/* Non-returnable item confirmation: shoot team intended this item not to be returned */}
+          <ConfirmDialog
+            open={nonReturnableConfirmOpen}
+            onOpenChange={(open) => {
+              setNonReturnableConfirmOpen(open);
+              if (!open) setPendingNonReturnable(null);
+            }}
+            title="Include non-returnable item?"
+            description={
+              pendingNonReturnable
+                ? `Serial ${pendingNonReturnable.serialId} was marked as non-returnable at request creation${pendingNonReturnable.item.nonReturnReason ? ` (${pendingNonReturnable.item.nonReturnReason})` : ""}. Including it is against that intention. Confirm you want to add it to this return?`
+                : ""
+            }
+            confirmLabel="Yes, include in return"
+            cancelLabel="Cancel"
+            variant="danger"
+            onConfirm={() => {
+              if (pendingNonReturnable) {
+                addScannedEntry(pendingNonReturnable.item);
+                setPendingNonReturnable(null);
+                setNonReturnableConfirmOpen(false);
+                setScanInput("");
+                prevLenRef.current = 0;
+                scanningRef.current = false;
+              }
+            }}
+          />
 
           {/* Partial return confirmation: detailed modal */}
           <Dialog.Root open={partialConfirmOpen} onOpenChange={setPartialConfirmOpen}>

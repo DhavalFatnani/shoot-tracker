@@ -59,9 +59,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const statusMessage = readyToClose
     ? { label: "Ready to close", class: "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-200" }
-    : balance.inTransit === 0 && balance.received === 0 && balance.sold === 0 && balance.notFound === 0
-      ? { label: "Awaiting dispatch", class: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200" }
-      : { label: "In progress", class: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" };
+    : balance.returnInTransit > 0
+      ? { label: "Return on the way", class: "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200" }
+      : balance.inTransit === 0 && balance.received === 0 && balance.sold === 0 && balance.notFound === 0
+        ? { label: "Awaiting dispatch", class: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200" }
+        : { label: "In progress", class: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200" };
 
   const balanceSum =
     balance.packed + balance.inTransit + balance.received + balance.sold + balance.notFound + balance.qcFail + balance.returnInTransit + balance.returned;

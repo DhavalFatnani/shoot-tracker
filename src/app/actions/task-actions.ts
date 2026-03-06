@@ -1,6 +1,8 @@
 "use server";
 
 import { getSession } from "@/lib/auth/get-session";
+import { getDb } from "@/lib/db/client";
+import * as taskSerialRepo from "@/lib/repositories/task-serial-repository";
 import * as taskService from "@/lib/services/task-service";
 import { createRequestSchema, closeTaskSchema, getTaskSchema, listTasksSchema } from "@/lib/validations";
 import { AppError } from "@/lib/errors";
@@ -126,6 +128,19 @@ export async function listTaskSerials(formData: FormData) {
   const res = await getTask(formData);
   if (!res.success || !res.data) return { success: false, error: res.error ?? "Failed", data: [] as { serialId: string; status: string; sku?: string }[] };
   return { success: true, data: res.data.taskSerials };
+}
+
+/** Serial IDs marked non-returnable for this task (for return-verify: highlight for OPS). */
+export async function getNonReturnableSerialsForTask(taskId: string) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized", data: [] as string[] };
+  try {
+    const db = getDb();
+    const serialIds = await taskSerialRepo.nonReturnableSerialIdsForTask(db, taskId);
+    return { success: true, data: serialIds };
+  } catch (e) {
+    return { success: false, error: mapError(e), data: [] as string[] };
+  }
 }
 
 /** Tasks that contain this serial (for serial timeline "Raise dispute"). Uses same visibility as listTasks. */

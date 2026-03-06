@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useMemo } from "react";
 import { startSession, addScan, commitSession, cancelSession } from "@/app/actions/session-actions";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -29,10 +29,11 @@ const SESSION_TYPES_BY_ROLE: Record<string, { value: SessionType; label: string 
   ],
 };
 
-export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId: string; userRole: string; defaultSessionType?: string }) {
+export function ScanSessionUI({ taskId, userRole, defaultSessionType, nonReturnableSerialIds = [] }: { taskId: string; userRole: string; defaultSessionType?: string; nonReturnableSerialIds?: string[] }) {
   const allowedTypes = SESSION_TYPES_BY_ROLE[userRole] ?? SESSION_TYPES_BY_ROLE.ADMIN;
   const initialType: SessionType =
     defaultSessionType && allowedTypes.some((t) => t.value === defaultSessionType) ? (defaultSessionType as SessionType) : allowedTypes[0].value;
+  const nonReturnableSet = useMemo(() => new Set(nonReturnableSerialIds), [nonReturnableSerialIds]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionType, setSessionType] = useState<SessionType>(initialType);
   const [scanInput, setScanInput] = useState("");
@@ -241,6 +242,13 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
         </div>
       ) : (
         <>
+          {sessionType === "RETURN_VERIFY" && nonReturnableSet.size > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                This task has {nonReturnableSet.size} non-returnable item{nonReturnableSet.size !== 1 ? "s" : ""} in the return. Check with shoot team when you scan them.
+              </p>
+            </div>
+          )}
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-3 text-sm">
               <span className="inline-flex rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">{sessionType}</span>
@@ -338,9 +346,14 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType }: { taskId
             ) : (
               <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
                 {items.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3 px-5 py-2.5">
+                  <li key={idx} className={`flex flex-wrap items-center gap-3 px-5 py-2.5 ${sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId) ? "bg-amber-50 dark:bg-amber-900/20" : ""}`}>
                     <span className={`inline-flex h-2 w-2 rounded-full ${item.scanStatus === "ERROR" ? "bg-red-500" : "bg-emerald-500"}`} />
                     <span className="font-mono text-xs text-slate-700">{item.serialId}</span>
+                    {sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId) && item.scanStatus !== "ERROR" && (
+                      <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-800 dark:text-amber-100">
+                        Non-returnable — check with shoot team
+                      </span>
+                    )}
                     {item.scanStatus === "ERROR" && item.errorReason && (
                       <span className="text-xs text-red-600">{item.errorReason}</span>
                     )}

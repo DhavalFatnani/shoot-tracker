@@ -3,7 +3,7 @@ import Link from "next/link";
 import { taskById } from "@/lib/repositories/task-repository";
 import { getDb } from "@/lib/db/client";
 import { ScanSessionUI } from "./scan-session-ui";
-import { listTasks } from "@/app/actions/task-actions";
+import { listTasks, getNonReturnableSerialsForTask } from "@/app/actions/task-actions";
 import { getTaskStatusClass, getTaskStatusLabel } from "@/lib/status-colors";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatTaskSerial } from "@/lib/format-serials";
@@ -17,6 +17,9 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
   if (!session) return null;
 
   const task = taskId ? await taskById(getDb(), taskId) : null;
+  const isReturnVerify = type === "RETURN_VERIFY";
+  const nonReturnableResult = taskId && isReturnVerify ? await getNonReturnableSerialsForTask(taskId) : null;
+  const nonReturnableSerialIds = nonReturnableResult?.success && nonReturnableResult.data ? nonReturnableResult.data : [];
 
   let tasksForPicker: { id: string; name: string | null; status: string; serial: number }[] = [];
   if (!taskId) {
@@ -91,7 +94,7 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
         </div>
       )}
       {taskId && task && !taskClosed && (
-        <ScanSessionUI taskId={taskId} userRole={session.role} defaultSessionType={defaultSessionType} />
+        <ScanSessionUI taskId={taskId} userRole={session.role} defaultSessionType={defaultSessionType} nonReturnableSerialIds={nonReturnableSerialIds} />
       )}
     </div>
   );

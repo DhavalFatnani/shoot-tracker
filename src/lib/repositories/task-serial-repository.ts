@@ -27,6 +27,15 @@ export async function taskIdsWithReceivedSerials(db: Database | Tx, taskIds: str
   return rows.map((r) => r.taskId);
 }
 
+/** Serial IDs that are marked non-returnable for this task (for return-verify: highlight for OPS). */
+export async function nonReturnableSerialIdsForTask(db: Database | Tx, taskId: string): Promise<string[]> {
+  const rows = await db
+    .select({ serialId: taskSerials.serialId })
+    .from(taskSerials)
+    .where(and(eq(taskSerials.taskId, taskId), eq(taskSerials.returnable, "0")));
+  return rows.map((r) => r.serialId);
+}
+
 export async function taskSerialCountsByStatus(db: Database | Tx, taskId: string): Promise<Map<TaskSerialStatus, number>> {
   const rows = await db
     .select({ status: taskSerials.status, count: sql<number>`count(*)::int` })

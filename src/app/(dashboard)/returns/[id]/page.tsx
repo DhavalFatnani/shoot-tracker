@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatTaskSerial, formatReturnSerial } from "@/lib/format-serials";
 import { formatDateTimeIST } from "@/lib/format-date";
 import { ReturnDispatchButton } from "./return-dispatch-button";
+import { NonReturnableAutoDownload } from "./non-returnable-auto-download";
 
 export default async function ReturnDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -35,6 +36,8 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
   const isTeamReturn = data.involvedShootTeamIds.some((tid) => session.shootTeamIds.includes(tid));
   const canDispatch =
     isShootOrAdmin && !data.dispatchedAt && (session.role === "ADMIN" || createdByYou || isTeamReturn);
+  const nonReturnableSerials = data.serials.filter((s) => s.returnable === "0");
+  const returnLabel = data.name ?? formatReturnSerial(data.serial);
 
   return (
     <div className="space-y-6">
@@ -113,12 +116,16 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
         </div>
       </div>
 
+      {isOpsOrAdmin && nonReturnableSerials.length > 0 && (
+        <NonReturnableAutoDownload nonReturnableSerials={nonReturnableSerials} returnLabel={returnLabel} />
+      )}
+
       <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
         <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Serial numbers in this return</h2>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
             {data.serials.length > 0
-              ? `All ${data.serials.length} serial(s). After dispatch they move to transit.`
+              ? `All ${data.serials.length} serial(s). After dispatch they move to transit.${nonReturnableSerials.length > 0 ? ` ${nonReturnableSerials.length} non-returnable — CSV auto-downloaded for OPS to share with shoot team.` : ""}`
               : "No serials recorded yet. Serials are added when the return scan session is committed."}
           </p>
         </div>
@@ -130,14 +137,29 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">#</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Serial number</th>
                   <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">SKU</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Task</th>
+                  <th className="px-5 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Non-returnable</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
                 {data.serials.map((s, idx) => (
-                  <tr key={s.serialId} className="transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50">
+                  <tr
+                    key={`${s.serialId}-${s.taskId}`}
+                    className={`transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50 ${s.returnable === "0" ? "bg-amber-50/80 dark:bg-amber-900/20" : ""}`}
+                  >
                     <td className="px-5 py-2.5 text-zinc-500 dark:text-zinc-400">{idx + 1}</td>
                     <td className="px-5 py-2.5 font-mono text-zinc-900 dark:text-zinc-100">{s.serialId}</td>
                     <td className="px-5 py-2.5 text-zinc-600 dark:text-zinc-300">{s.sku ?? "—"}</td>
+                    <td className="px-5 py-2.5 text-zinc-600 dark:text-zinc-300">{s.taskName ?? "—"}</td>
+                    <td className="px-5 py-2.5">
+                      {s.returnable === "0" ? (
+                        <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-800 dark:text-amber-100" title="Check with shoot team">
+                          Yes{s.nonReturnReason ? ` · ${s.nonReturnReason}` : ""}
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

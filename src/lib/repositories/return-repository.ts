@@ -191,8 +191,8 @@ export type ReturnWithSessions = {
   totalSerials: number;
   /** Number of serials in this return that have been verified (task_serial status RETURNED) */
   verifiedCount: number;
-  /** All serials in this return (from session_items), with sku when available */
-  serials: { serialId: string; sku: string | null }[];
+  /** All serials in this return (from session_items), with sku, returnable, nonReturnReason, taskId for OPS/non-returnable list */
+  serials: { serialId: string; sku: string | null; taskId: string; taskName: string | null; returnable: string; nonReturnReason: string | null }[];
   /** Shoot team IDs of tasks involved in this return (for SHOOT_USER access) */
   involvedShootTeamIds: string[];
 };
@@ -256,11 +256,16 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
   const totalSerials = sessionsList.reduce((n, s) => n + s.serialCount, 0);
 
   const taskIdBySession = new Map(sessionRows.map((s) => [s.sessionId, s.taskId]));
+  const taskNameByTaskId = new Map(sessionRows.map((s) => [s.taskId, s.taskName]));
   const pairs = itemRows
     .map((i) => ({ taskId: taskIdBySession.get(i.sessionId), serialId: i.serialId }))
     .filter((p): p is { taskId: string; serialId: string } => p.taskId != null);
 
   let verifiedCount = 0;
+  let serialsWithMeta: { serialId: string; sku: string | null; taskId: string; taskName: string | null; returnable: string; nonReturnReason: string | null }[] = itemRows.map((row) => {
+    const taskId = taskIdBySession.get(row.sessionId)!;
+    return { serialId: row.serialId, sku: null as string | null, taskId, taskName: taskNameByTaskId.get(taskId) ?? null, returnable: "1", nonReturnReason: null as string | null };
+  });
   if (pairs.length > 0) {
     const conditions = pairs.map((p) =>
       and(
@@ -274,16 +279,31 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
       .from(taskSerials)
       .where(or(...conditions));
     verifiedCount = returned.length;
+    const tsRows = await db
+      .select({ taskId: taskSerials.taskId, serialId: taskSerials.serialId, returnable: taskSerials.returnable, nonReturnReason: taskSerials.nonReturnReason })
+      .from(taskSerials)
+      .where(or(...pairs.map((p) => and(eq(taskSerials.taskId, p.taskId), eq(taskSerials.serialId, p.serialId)))));
+    const metaByKey = new Map(tsRows.map((r) => [`${r.taskId}:${r.serialId}`, r]));
+    serialsWithMeta = itemRows.map((row) => {
+      const taskId = taskIdBySession.get(row.sessionId)!;
+      const meta = metaByKey.get(`${taskId}:${row.serialId}`);
+      return {
+        serialId: row.serialId,
+        sku: null as string | null,
+        taskId,
+        taskName: taskNameByTaskId.get(taskId) ?? null,
+        returnable: meta?.returnable ?? "1",
+        nonReturnReason: meta?.nonReturnReason ?? null,
+      };
+    });
   }
-
-  let serialsWithSku: { serialId: string; sku: string | null }[] = itemRows.map((row) => ({ serialId: row.serialId, sku: null }));
   if (serialIds.size > 0) {
     const regRows = await db
       .select({ serialId: serialRegistry.serialId, sku: serialRegistry.sku })
       .from(serialRegistry)
       .where(inArray(serialRegistry.serialId, [...serialIds]));
     const skuBySerial = new Map(regRows.map((x) => [x.serialId, x.sku]));
-    serialsWithSku = itemRows.map((row) => ({ serialId: row.serialId, sku: skuBySerial.get(row.serialId) ?? null }));
+    serialsWithMeta = serialsWithMeta.map((row) => ({ ...row, sku: skuBySerial.get(row.serialId) ?? null }));
   }
 
   return {
@@ -297,7 +317,7 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     sessions: sessionsList,
     totalSerials,
     verifiedCount,
-    serials: serialsWithSku,
+    serials: serialsWithMeta,
     involvedShootTeamIds,
   };
 }

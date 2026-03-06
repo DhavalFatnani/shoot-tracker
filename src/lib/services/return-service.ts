@@ -25,6 +25,9 @@ export type InventoryItem = {
   status: string;
   /** When this serial was received (latest RECEIPT event). Used for aging in Create Return. */
   receivedAt: Date | null;
+  /** "1" = returnable, "0" = non-returnable (marked at request creation). */
+  returnable?: string;
+  nonReturnReason?: string | null;
 };
 
 export async function getShootTeamInventory(
@@ -57,6 +60,8 @@ export async function getShootTeamInventory(
       sku: serialRegistry.sku,
       currentLocation: serialCurrentState.currentLocation,
       status: taskSerials.status,
+      returnable: taskSerials.returnable,
+      nonReturnReason: taskSerials.nonReturnReason,
     })
     .from(taskSerials)
     .innerJoin(tasks, eq(taskSerials.taskId, tasks.id))
@@ -95,6 +100,8 @@ export async function getShootTeamInventory(
     currentLocation: r.currentLocation,
     status: r.status,
     receivedAt: receivedAtByKey.get(`${r.taskId}:${r.serialId}`) ?? null,
+    returnable: r.returnable,
+    nonReturnReason: r.nonReturnReason ?? null,
   }));
 }
 
