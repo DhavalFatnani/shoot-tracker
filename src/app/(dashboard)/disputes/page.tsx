@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
 import { listTasks } from "@/app/actions/task-actions";
-import { listDisputesByTask } from "@/app/actions/dispute-actions";
+import { listDisputesForTaskIds } from "@/app/actions/dispute-actions";
 import { ResolveDisputeForm } from "./resolve-dispute-form";
 import { RaiseDisputeForm } from "./raise-dispute-form";
 import { getDisputeStatusClass } from "@/lib/status-colors";
@@ -14,13 +14,27 @@ export default async function DisputesPage() {
   const formData = new FormData();
   const tasksResult = await listTasks(formData);
   const tasks = tasksResult.success && tasksResult.data ? tasksResult.data : [];
+  const taskIds = tasks.map((t) => t.id);
+  const disputesResult =
+    taskIds.length > 0
+      ? await listDisputesForTaskIds((() => {
+          const fd = new FormData();
+          fd.set("taskIds", JSON.stringify(taskIds));
+          return fd;
+        })())
+      : { success: true as const, data: [] as any[] };
+  const allDisputes = disputesResult.success && disputesResult.data ? disputesResult.data : [];
+  const disputesByTaskId = new Map<string, typeof allDisputes>();
+  for (const d of allDisputes) {
+    const list = disputesByTaskId.get(d.taskId) ?? [];
+    list.push(d);
+    disputesByTaskId.set(d.taskId, list);
+  }
   const disputesByTask: { taskId: string; taskSerial: number; disputes: any[] }[] = [];
   for (const t of tasks) {
-    const fd = new FormData();
-    fd.set("taskId", t.id);
-    const dr = await listDisputesByTask(fd);
-    if (dr.success && dr.data && dr.data.length > 0) {
-      disputesByTask.push({ taskId: t.id, taskSerial: t.serial, disputes: dr.data });
+    const disputes = disputesByTaskId.get(t.id);
+    if (disputes && disputes.length > 0) {
+      disputesByTask.push({ taskId: t.id, taskSerial: t.serial, disputes });
     }
   }
 

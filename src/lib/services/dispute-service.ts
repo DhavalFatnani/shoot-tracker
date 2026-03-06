@@ -9,6 +9,13 @@ export async function listDisputesByTask(taskId: string) {
   return disputeRepo.disputesByTaskId(db, taskId);
 }
 
+/** List disputes for multiple task IDs in one query (for disputes page). */
+export async function listDisputesForTaskIds(taskIds: string[]) {
+  if (taskIds.length === 0) return [];
+  const db = getDb();
+  return disputeRepo.disputesByTaskIds(db, taskIds);
+}
+
 export async function createDispute(
   input: { taskId: string; serialId: string; disputeType: string; description?: string },
   userId: string,

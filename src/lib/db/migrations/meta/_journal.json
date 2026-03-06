@@ -2,124 +2,27 @@
   "version": "7",
   "dialect": "postgresql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1772486941970,
-      "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1772600000000,
-      "tag": "0003_task_name_reason_return",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1772700000000,
-      "tag": "0004_warehouse_actions",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1772800000000,
-      "tag": "0005_dispute_resolution_fields",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1772900000000,
-      "tag": "0006_task_comments",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1773000000000,
-      "tag": "0007_admin_revert_event_type",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1773100000000,
-      "tag": "0008_task_serial_status_enums",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1773100000500,
-      "tag": "0010_task_serial_in_transit",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1773100001000,
-      "tag": "0009_task_serial_status_data",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1773100002000,
-      "tag": "0013_backfill_received_location",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1773100003000,
-      "tag": "0014_returns_table",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1773100004000,
-      "tag": "0015_returns_name",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1773100005000,
-      "tag": "0016_serial_codes",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1773100006000,
-      "tag": "0017_return_created_and_dispatch",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1773100007000,
-      "tag": "0018_task_dispatch_locked_kpis",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1773100008000,
-      "tag": "0019_returns_closed_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1773100008500,
-      "tag": "0011_request_event_type",
-      "breakpoints": true
-    }
+    { "idx": 0, "version": "7", "when": 1772486941970, "tag": "0000_init", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1772500000000, "tag": "0001_trigger_and_rls", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1772550000000, "tag": "0002_auth_profile_trigger", "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1772600000000, "tag": "0003_task_name_reason_return", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1772700000000, "tag": "0004_warehouse_actions", "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1772800000000, "tag": "0005_dispute_resolution_fields", "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1772900000000, "tag": "0006_task_comments", "breakpoints": true },
+    { "idx": 7, "version": "7", "when": 1773000000000, "tag": "0007_admin_revert_event_type", "breakpoints": true },
+    { "idx": 8, "version": "7", "when": 1773100000000, "tag": "0008_task_serial_status_enums", "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1773100000500, "tag": "0010_task_serial_in_transit", "breakpoints": true },
+    { "idx": 10, "version": "7", "when": 1773100001000, "tag": "0009_task_serial_status_data", "breakpoints": true },
+    { "idx": 11, "version": "7", "when": 1773100002000, "tag": "0013_backfill_received_location", "breakpoints": true },
+    { "idx": 12, "version": "7", "when": 1773100003000, "tag": "0014_returns_table", "breakpoints": true },
+    { "idx": 13, "version": "7", "when": 1773100004000, "tag": "0015_returns_name", "breakpoints": true },
+    { "idx": 14, "version": "7", "when": 1773100005000, "tag": "0016_serial_codes", "breakpoints": true },
+    { "idx": 15, "version": "7", "when": 1773100006000, "tag": "0017_return_created_and_dispatch", "breakpoints": true },
+    { "idx": 16, "version": "7", "when": 1773100007000, "tag": "0018_task_dispatch_locked_kpis", "breakpoints": true },
+    { "idx": 17, "version": "7", "when": 1773100008000, "tag": "0019_returns_closed_at", "breakpoints": true },
+    { "idx": 18, "version": "7", "when": 1773100008500, "tag": "0011_request_event_type", "breakpoints": true },
+    { "idx": 19, "version": "7", "when": 1773100009000, "tag": "0012_location_qc_fail", "breakpoints": true },
+    { "idx": 20, "version": "7", "when": 1773100009500, "tag": "0020_profiles_first_last_name", "breakpoints": true },
+    { "idx": 21, "version": "7", "when": 1773100010000, "tag": "0021_performance_indexes", "breakpoints": true }
   ]
 }

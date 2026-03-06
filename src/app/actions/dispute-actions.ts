@@ -35,6 +35,31 @@ export async function listDisputesByTask(formData: FormData) {
   }
 }
 
+/** Batch list disputes for many tasks in one query (for disputes page). */
+export async function listDisputesForTaskIds(formData: FormData) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  const taskIdsRaw = formData.get("taskIds");
+  let taskIds: string[];
+  if (typeof taskIdsRaw === "string") {
+    try {
+      taskIds = JSON.parse(taskIdsRaw) as string[];
+    } catch {
+      return { success: false, error: "Invalid taskIds" };
+    }
+  } else {
+    taskIds = [];
+  }
+
+  try {
+    const data = await disputeService.listDisputesForTaskIds(taskIds);
+    return { success: true, data };
+  } catch (e) {
+    return { success: false, error: mapError(e) };
+  }
+}
+
 export async function resolveDispute(formData: FormData) {
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };

@@ -163,12 +163,12 @@ export async function closeTask(taskId: string, userId: string, userRole: Role, 
 
 export async function getTask(taskId: string, _userId: string, _userRole: Role) {
   const db = getDb();
-  const task = await taskRepo.taskById(db, taskId);
-  if (!task) throw new NotFoundError("Task", taskId);
-  const [serials, countsMap] = await Promise.all([
+  const [task, serials, countsMap] = await Promise.all([
+    taskRepo.taskById(db, taskId),
     taskSerialRepo.taskSerialsByTaskId(db, taskId),
     taskSerialRepo.taskSerialCountsByStatus(db, taskId),
   ]);
+  if (!task) throw new NotFoundError("Task", taskId);
   const serialIds = serials.map((s) => s.serialId);
   const registryRows = serialIds.length > 0 ? await serialRegistryRepo.serialRegistryByIds(db, serialIds) : [];
   const skuBySerialId = new Map(registryRows.map((r) => [r.serialId, r.sku]));

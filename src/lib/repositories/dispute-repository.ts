@@ -11,6 +11,12 @@ export function disputesByTaskId(db: Database | Tx, taskId: string) {
   return db.select().from(disputes).where(eq(disputes.taskId, taskId));
 }
 
+/** All disputes for the given task IDs (single query for disputes page). */
+export function disputesByTaskIds(db: Database | Tx, taskIds: string[]) {
+  if (taskIds.length === 0) return Promise.resolve([]);
+  return db.select().from(disputes).where(inArray(disputes.taskId, taskIds));
+}
+
 export function openDisputesByTaskId(db: Database | Tx, taskId: string) {
   return db.select().from(disputes).where(and(eq(disputes.taskId, taskId), eq(disputes.status, "OPEN")));
 }
