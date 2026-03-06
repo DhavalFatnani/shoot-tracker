@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { getSerialTimeline } from "@/app/actions/serial-actions";
+import { listTasksForSerial } from "@/app/actions/task-actions";
+import { formatTaskSerial } from "@/lib/format-serials";
 
 const EVENT_COLORS: Record<string, string> = {
   PICK: "bg-blue-100 text-blue-700",
@@ -13,11 +16,12 @@ const EVENT_COLORS: Record<string, string> = {
   REQUEST: "bg-slate-100 text-slate-700",
 };
 
-export function SerialTimelineForm() {
+export function SerialTimelineForm({ canRaiseDispute }: { canRaiseDispute: boolean }) {
   const [serialId, setSerialId] = useState("");
   const [events, setEvents] = useState<{ eventType: string; fromLocation: string; toLocation: string; createdAt: Date | string | null }[]>([]);
   const [serialSku, setSerialSku] = useState("");
   const [displaySerialId, setDisplaySerialId] = useState("");
+  const [tasksForSerial, setTasksForSerial] = useState<{ taskId: string; serial: number }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -33,11 +37,22 @@ export function SerialTimelineForm() {
         setEvents(d.events);
         setSerialSku(d.sku);
         setDisplaySerialId(d.serialId);
+        if (canRaiseDispute) {
+          const fd = new FormData();
+          fd.set("serialId", d.serialId);
+          listTasksForSerial(fd).then((r) => {
+            if (r.success && r.data) setTasksForSerial(r.data);
+            else setTasksForSerial([]);
+          });
+        } else {
+          setTasksForSerial([]);
+        }
       } else {
         setError(result.error ?? "Failed");
         setEvents([]);
         setSerialSku("");
         setDisplaySerialId("");
+        setTasksForSerial([]);
       }
     });
   }
@@ -83,16 +98,29 @@ export function SerialTimelineForm() {
       )}
 
       {displaySerialId && (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-3 text-sm">
-            <span className="font-medium text-slate-900">Serial:</span>
-            <span className="font-mono text-slate-700">{displaySerialId}</span>
-            {serialSku && (
-              <>
-                <span className="text-slate-300">|</span>
-                <span className="font-medium text-slate-900">SKU:</span>
-                <span className="text-slate-700">{serialSku}</span>
-              </>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-sm">
+              <span className="font-medium text-slate-900 dark:text-zinc-100">Serial:</span>
+              <span className="font-mono text-slate-700 dark:text-zinc-300">{displaySerialId}</span>
+              {serialSku && (
+                <>
+                  <span className="text-slate-300 dark:text-zinc-500">|</span>
+                  <span className="font-medium text-slate-900 dark:text-zinc-100">SKU:</span>
+                  <span className="text-slate-700 dark:text-zinc-300">{serialSku}</span>
+                </>
+              )}
+            </div>
+            {canRaiseDispute && tasksForSerial.length > 0 && (
+              <Link
+                href={`/tasks/${tasksForSerial[0].taskId}`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-200 dark:hover:bg-amber-900/70"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
+                Raise dispute {tasksForSerial.length > 1 ? `(Task ${formatTaskSerial(tasksForSerial[0].serial)})` : ""}
+              </Link>
             )}
           </div>
         </div>

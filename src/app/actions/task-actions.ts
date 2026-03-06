@@ -121,6 +121,33 @@ export async function getTask(formData: FormData) {
   }
 }
 
+/** List serials for a task (for dropdowns e.g. Raise new dispute). Uses same visibility as getTask. */
+export async function listTaskSerials(formData: FormData) {
+  const res = await getTask(formData);
+  if (!res.success || !res.data) return { success: false, error: res.error ?? "Failed", data: [] as { serialId: string; status: string; sku?: string }[] };
+  return { success: true, data: res.data.taskSerials };
+}
+
+/** Tasks that contain this serial (for serial timeline "Raise dispute"). Uses same visibility as listTasks. */
+export async function listTasksForSerial(formData: FormData) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized", data: [] as { taskId: string; serial: number }[] };
+  const serialId = formData.get("serialId");
+  if (typeof serialId !== "string" || !serialId.trim()) return { success: false, error: "Missing serialId", data: [] };
+  try {
+    const data = await taskService.listTasksForSerial(
+      serialId.trim(),
+      session.id,
+      session.role,
+      session.shootTeamIds ?? [],
+      session.opsWarehouseIds ?? []
+    );
+    return { success: true, data };
+  } catch (e) {
+    return { success: false, error: mapError(e), data: [] };
+  }
+}
+
 export async function listTasks(formData: FormData) {
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };

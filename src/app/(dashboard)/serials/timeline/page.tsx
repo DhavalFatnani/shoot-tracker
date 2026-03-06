@@ -4,6 +4,7 @@ import { SerialTimelineForm } from "./serial-timeline-form";
 export default async function SerialTimelinePage() {
   const session = await getSession();
   if (!session) return null;
+  const canRaiseDispute = session.role === "OPS_USER" || session.role === "ADMIN";
 
   return (
     <div className="space-y-6">
@@ -13,7 +14,7 @@ export default async function SerialTimelinePage() {
           Enter a serial ID to view its full event history and audit trail.
         </p>
       </div>
-      <SerialTimelineForm />
+      <SerialTimelineForm canRaiseDispute={canRaiseDispute} />
     </div>
   );
 }

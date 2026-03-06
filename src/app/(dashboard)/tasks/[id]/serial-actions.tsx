@@ -146,10 +146,11 @@ export function SerialRowActions({
   const isAdmin = userRole === "ADMIN";
   const isOpsOrAdmin = userRole === "OPS_USER" || isAdmin;
   const actionableStatus = serial.status === "REQUESTED" || serial.status === "PACKED" || serial.status === "PICKED";
+  const disputeOnlyStatus = serial.status === "IN_TRANSIT" || serial.status === "RECEIVED";
   const revertableStatus = !actionableStatus && serial.status !== "REQUESTED";
 
   if (!isOpsOrAdmin) return null;
-  if (!actionableStatus && !(isAdmin && revertableStatus)) return null;
+  if (!actionableStatus && !disputeOnlyStatus && !(isAdmin && revertableStatus)) return null;
 
   const handleRevert = () => {
     setError(null);
@@ -163,12 +164,87 @@ export function SerialRowActions({
     });
   };
 
+  const handleRaiseDispute = () => {
+    if (!disputeType.trim()) {
+      setError("Dispute type is required");
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("taskId", taskId);
+      fd.set("serialId", serial.serialId);
+      fd.set("disputeType", disputeType);
+      fd.set("description", disputeDescription);
+      const res = await raiseDispute(fd);
+      if (res.success) {
+        setActiveAction("none");
+        setDisputeDescription("");
+        router.refresh();
+      } else {
+        setError(res.error ?? "Failed to create dispute");
+      }
+    });
+  };
+
   if (!actionableStatus && isAdmin && revertableStatus) {
     return (
       <div className="flex flex-col gap-1.5">
         <button onClick={handleRevert} disabled={pending}
           className="rounded-md bg-purple-100 px-2.5 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-200 disabled:opacity-50">
           Revert to Requested
+        </button>
+        {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  if (disputeOnlyStatus) {
+    if (activeAction === "dispute") {
+      return (
+        <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5">
+            <select
+              value={disputeType}
+              onChange={(e) => setDisputeType(e.target.value)}
+              className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+            >
+              <option value="DAMAGED">Damaged / QC issue</option>
+              <option value="WRONG_ITEM">Wrong item</option>
+              <option value="MISSING_FROM_SHOOT">Missing from shoot</option>
+              <option value="SCAN_MISMATCH">Scan mismatch</option>
+              <option value="OTHER">Other</option>
+            </select>
+            <textarea
+              placeholder="Add details…"
+              value={disputeDescription}
+              onChange={(e) => setDisputeDescription(e.target.value)}
+              rows={2}
+              className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleRaiseDispute} disabled={pending}
+              className="rounded-md bg-amber-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
+              {pending ? "Creating..." : "Create dispute"}
+            </button>
+            <button onClick={() => { setActiveAction("none"); setError(null); }} disabled={pending}
+              className="rounded-md bg-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-500">
+              Cancel
+            </button>
+          </div>
+          {error && <p className="text-xs text-red-600">{error}</p>}
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col gap-1.5">
+        <button
+          onClick={() => setActiveAction("dispute")}
+          disabled={pending}
+          className="rounded-md bg-amber-100 px-2.5 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-200 disabled:opacity-50"
+        >
+          Raise dispute
         </button>
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
@@ -212,29 +288,6 @@ export function SerialRowActions({
       const res = await markSerialQcFail(fd);
       if (res.success) { setActiveAction("none"); router.refresh(); }
       else { setError(res.error ?? "Failed"); }
-    });
-  };
-
-  const handleRaiseDispute = () => {
-    if (!disputeType.trim()) {
-      setError("Dispute type is required");
-      return;
-    }
-    setError(null);
-    startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      fd.set("serialId", serial.serialId);
-      fd.set("disputeType", disputeType);
-      if (disputeDescription.trim()) fd.set("description", disputeDescription.trim());
-      const res = await raiseDispute(fd);
-      if (res.success) {
-        setActiveAction("none");
-        setDisputeDescription("");
-        router.refresh();
-      } else {
-        setError(res.error ?? "Failed to raise dispute");
-      }
     });
   };
 

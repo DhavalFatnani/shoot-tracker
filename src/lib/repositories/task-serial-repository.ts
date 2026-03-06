@@ -78,3 +78,8 @@ export async function getTaskSerial(db: Database | Tx, taskId: string, serialId:
   const rows = await db.select().from(taskSerials).where(and(eq(taskSerials.taskId, taskId), eq(taskSerials.serialId, serialId))).limit(1);
   return rows[0] ?? null;
 }
+
+/** Task IDs that contain this serial (for timeline "Raise dispute" link). */
+export async function getTaskIdsBySerialId(db: Database | Tx, serialId: string): Promise<{ taskId: string }[]> {
+  return db.select({ taskId: taskSerials.taskId }).from(taskSerials).where(eq(taskSerials.serialId, serialId));
+}

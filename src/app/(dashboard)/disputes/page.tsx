@@ -3,6 +3,7 @@ import Link from "next/link";
 import { listTasks } from "@/app/actions/task-actions";
 import { listDisputesByTask } from "@/app/actions/dispute-actions";
 import { ResolveDisputeForm } from "./resolve-dispute-form";
+import { RaiseDisputeForm } from "./raise-dispute-form";
 import { getDisputeStatusClass } from "@/lib/status-colors";
 import { formatTaskSerial } from "@/lib/format-serials";
 
@@ -25,15 +26,19 @@ export default async function DisputesPage() {
 
   const totalDisputes = disputesByTask.reduce((sum, g) => sum + g.disputes.length, 0);
   const canResolve = session.role === "OPS_USER" || session.role === "ADMIN";
+  const canRaise = session.role === "OPS_USER" || session.role === "ADMIN";
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Disputes</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Disputes</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {totalDisputes} dispute{totalDisputes !== 1 ? "s" : ""} across {disputesByTask.length} task{disputesByTask.length !== 1 ? "s" : ""}
         </p>
       </div>
+      {canRaise && tasks.length > 0 && (
+        <RaiseDisputeForm tasks={tasks.map((t) => ({ id: t.id, serial: t.serial }))} />
+      )}
       {disputesByTask.length === 0 ? (
         <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center shadow-sm">
           <svg className="mx-auto h-10 w-10 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

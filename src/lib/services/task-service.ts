@@ -201,6 +201,29 @@ export async function listTasks(
   });
 }
 
+/** Tasks that contain this serial and are visible to the user (for serial timeline "Raise dispute"). */
+export async function listTasksForSerial(
+  serialId: string,
+  userId: string,
+  userRole: Role,
+  shootTeamIds: string[],
+  opsWarehouseIds: string[]
+): Promise<{ taskId: string; serial: number }[]> {
+  const db = getDb();
+  const [serialTaskIds, visibleTasks] = await Promise.all([
+    taskSerialRepo.getTaskIdsBySerialId(db, serialId),
+    taskRepo.listTasks(db, {
+      isAdmin: userRole === "ADMIN",
+      shootTeamIds,
+      opsWarehouseIds,
+      limit: 500,
+      offset: 0,
+    }),
+  ]);
+  const idSet = new Set(serialTaskIds.map((r) => r.taskId));
+  return visibleTasks.filter((t) => idSet.has(t.id)).map((t) => ({ taskId: t.id, serial: t.serial }));
+}
+
 /**
  * Mark a serial as SOLD with an order ID
  * Only OPS_USER and ADMIN can perform this action

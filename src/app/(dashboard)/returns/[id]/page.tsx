@@ -153,7 +153,7 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
         <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
           <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Tasks in this return</h2>
           <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-            OPS verifies each task via Return verify scan. Open a task to view serials or start verification.
+            OPS verifies each task via Return verify scan. Open a task to view serials, raise a dispute on a serial row, or start verification.
           </p>
         </div>
         {data.sessions.length === 0 ? (
@@ -187,15 +187,26 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
                   <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300">{s.serialCount}</td>
                   <td className="px-5 py-3.5 text-right">
                     {isOpsOrAdmin ? (
-                      <Link
-                        href={`/sessions/scan?taskId=${s.taskId}&type=RETURN_VERIFY`}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-200 dark:hover:bg-amber-900/70"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-                        </svg>
-                        Return verify
-                      </Link>
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Link
+                          href={`/tasks/${s.taskId}`}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-200 dark:hover:bg-amber-900/70"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                          </svg>
+                          Raise dispute
+                        </Link>
+                        <Link
+                          href={`/sessions/scan?taskId=${s.taskId}&type=RETURN_VERIFY`}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-teal-100 px-3 py-2 text-sm font-medium text-teal-800 transition-colors hover:bg-teal-200 dark:bg-teal-900/50 dark:text-teal-200 dark:hover:bg-teal-900/70"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                          </svg>
+                          Return verify
+                        </Link>
+                      </div>
                     ) : (
                       <span className="text-xs text-zinc-400 dark:text-zinc-500">OPS only</span>
                     )}
