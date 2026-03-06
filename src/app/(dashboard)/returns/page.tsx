@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import { LinkWithStopPropagation } from "@/components/ui/link-with-stop-propagation";
 import { listReturns } from "@/app/actions/return-actions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ReturnsEmptyState } from "@/components/empty-state";
@@ -112,16 +113,15 @@ export default async function ReturnsPage({
                   {formatDateTimeIST(r.createdAt)}
                 </td>
                 <td className="px-5 py-3.5 text-right">
-                  <Link
+                  <LinkWithStopPropagation
                     href={`/returns/${r.id}`}
-                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 transition duration-200 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
                   >
                     View
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
                     </svg>
-                  </Link>
+                  </LinkWithStopPropagation>
                 </td>
               </ClickableTableRow>
             );

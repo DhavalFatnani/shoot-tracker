@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
 import { ClickableTableRow } from "@/components/ui/clickable-table-row";
+import { LinkWithStopPropagation } from "@/components/ui/link-with-stop-propagation";
 import { listActivityLogs } from "@/app/actions/activity-actions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatTaskSerial } from "@/lib/format-serials";
@@ -89,13 +90,12 @@ export default async function ActivityLogsPage({
                   </span>
                 </td>
                 <td className="px-5 py-3.5">
-                  <Link
+                  <LinkWithStopPropagation
                     href={`/tasks/${row.taskId}`}
-                    onClick={(e) => e.stopPropagation()}
                     className="font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
                   >
                     {row.taskName ?? formatTaskSerial(row.taskSerial)}
-                  </Link>
+                  </LinkWithStopPropagation>
                   <span className="ml-1 text-xs text-zinc-400 dark:text-zinc-500">
                     {formatTaskSerial(row.taskSerial)}
                   </span>
