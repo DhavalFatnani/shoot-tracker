@@ -12,6 +12,14 @@ export function openSessionsByTaskId(db: Database | Tx, taskId: string) {
   return db.select().from(sessions).where(and(eq(sessions.taskId, taskId), eq(sessions.status, "OPEN")));
 }
 
+/** OPEN sessions for a task started by the given user (for force-exit cleanup). */
+export function openSessionsByTaskIdAndStartedBy(db: Database | Tx, taskId: string, startedBy: string) {
+  return db
+    .select()
+    .from(sessions)
+    .where(and(eq(sessions.taskId, taskId), eq(sessions.status, "OPEN"), eq(sessions.startedBy, startedBy)));
+}
+
 export async function createSession(
   tx: Tx,
   row: {

@@ -38,6 +38,9 @@ export async function startSession(input: StartSessionInput, userId: string, _us
   if (task.status === "CLOSED") {
     throw new InvariantViolationError("Cannot start a scan session for a closed task.");
   }
+  // If user had an OPEN session for this task (e.g. force-exited without commit/cancel), cancel it so serials are effectively reverted as cancelled
+  await cancelOpenSessionsForTaskByUser(input.taskId, userId);
+
   const { from, to } = SESSION_TYPE_FROM_TO[input.type] ?? { from: "WH_", to: "TRANSIT" };
 
   const TASK_STATUS_ON_START: Record<string, string> = {
@@ -218,6 +221,13 @@ export async function commitSession(input: CommitSessionInput, userId: string) {
   });
 }
 
+const TASK_STATUS_ON_COMMIT_OR_CANCEL: Record<string, string> = {
+  PICK: "PICKING_PENDING",
+  RECEIPT: "COLLECTED",
+  RETURN_SCAN: "COLLECTED",
+  RETURN_VERIFY: "COLLECTED",
+};
+
 export async function cancelSession(input: CancelSessionInput) {
   const db = getDb();
   const session = await sessionRepo.sessionById(db, input.sessionId);
@@ -226,5 +236,34 @@ export async function cancelSession(input: CancelSessionInput) {
 
   await db.transaction(async (tx) => {
     await sessionRepo.cancelSession(tx, input.sessionId);
+    // Revert task status when no other OPEN sessions (same as commit path)
+    const openSessions = await sessionRepo.openSessionsByTaskId(tx, session.taskId);
+    if (openSessions.length === 0) {
+      const revertStatus = TASK_STATUS_ON_COMMIT_OR_CANCEL[session.type];
+      if (revertStatus) {
+        await taskRepo.updateTaskStatus(tx, session.taskId, revertStatus);
+      }
+    }
+  });
+}
+
+/** Cancel any OPEN sessions for this task started by the user (e.g. after force-exit). Serials were never applied, so only session status and task status are reverted. */
+export async function cancelOpenSessionsForTaskByUser(taskId: string, userId: string) {
+  const db = getDb();
+  const toCancel = await sessionRepo.openSessionsByTaskIdAndStartedBy(db, taskId, userId);
+  if (toCancel.length === 0) return;
+
+  await db.transaction(async (tx) => {
+    for (const s of toCancel) {
+      await sessionRepo.cancelSession(tx, s.id);
+    }
+    const openSessions = await sessionRepo.openSessionsByTaskId(tx, taskId);
+    if (openSessions.length === 0) {
+      const lastType = toCancel[toCancel.length - 1]?.type;
+      const revertStatus = lastType ? TASK_STATUS_ON_COMMIT_OR_CANCEL[lastType] : undefined;
+      if (revertStatus) {
+        await taskRepo.updateTaskStatus(tx, taskId, revertStatus);
+      }
+    }
   });
 }
