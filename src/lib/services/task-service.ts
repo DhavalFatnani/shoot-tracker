@@ -190,10 +190,12 @@ export async function listTasks(
   options: { status?: "OPEN" | "PICKING_PENDING" | "PICKING" | "IN_TRANSIT" | "ACTIVE" | "RETURN_PENDING" | "COLLECTED" | "RECEIVING" | "RETURNING" | "VERIFYING" | "CLOSED"; limit?: number; offset?: number; q?: string }
 ) {
   const db = getDb();
+  const teamIds = Array.isArray(shootTeamIds) ? shootTeamIds : [];
+  const warehouseIds = Array.isArray(opsWarehouseIds) ? opsWarehouseIds : [];
   return taskRepo.listTasks(db, {
     isAdmin: userRole === "ADMIN",
-    shootTeamIds,
-    opsWarehouseIds,
+    shootTeamIds: teamIds,
+    opsWarehouseIds: warehouseIds,
     status: options.status,
     limit: options.limit ?? 20,
     offset: options.offset ?? 0,

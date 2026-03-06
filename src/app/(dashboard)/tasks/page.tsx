@@ -26,27 +26,28 @@ export default async function TasksPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const session = await getSession();
-  if (!session) return null;
+  try {
+    const session = await getSession();
+    if (!session) return null;
 
-  const params = await searchParams;
-  const status = params.status ?? "";
-  const page = Math.max(1, parseInt(params.page ?? "1", 10));
-  const q = (params.q ?? "").trim();
-  const offset = (page - 1) * PAGE_SIZE;
+    const params = await searchParams;
+    const status = params.status ?? "";
+    const page = Math.max(1, parseInt(params.page ?? "1", 10));
+    const q = (params.q ?? "").trim();
+    const offset = (page - 1) * PAGE_SIZE;
 
-  const formData = new FormData();
-  formData.set("limit", String(PAGE_SIZE + 1));
-  formData.set("offset", String(offset));
-  if (status) formData.set("status", status);
-  if (q) formData.set("q", q);
+    const formData = new FormData();
+    formData.set("limit", String(PAGE_SIZE + 1));
+    formData.set("offset", String(offset));
+    if (status) formData.set("status", status);
+    if (q) formData.set("q", q);
 
-  const result = await listTasks(formData);
-  const rawTasks = result.success && result.data ? result.data : [];
-  const hasNext = rawTasks.length > PAGE_SIZE;
-  const tasks = rawTasks.slice(0, PAGE_SIZE);
+    const result = await listTasks(formData);
+    const rawTasks = result.success && result.data ? result.data : [];
+    const hasNext = rawTasks.length > PAGE_SIZE;
+    const tasks = rawTasks.slice(0, PAGE_SIZE);
 
-  return (
+    return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Tasks" }]} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -168,5 +169,21 @@ export default async function TasksPage({
         </nav>
       )}
     </div>
-  );
+    );
+  } catch (e) {
+    console.error("Tasks page error:", e);
+    return (
+      <div className="space-y-6">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20">
+          <h1 className="text-lg font-semibold text-red-800 dark:text-red-200">Something went wrong</h1>
+          <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+            We couldn’t load the tasks list. Please try again.
+          </p>
+          <a href="/tasks" className="mt-4 inline-block text-sm font-medium text-red-600 hover:underline dark:text-red-400">
+            Reload tasks
+          </a>
+        </div>
+      </div>
+    );
+  }
 }

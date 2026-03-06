@@ -168,8 +168,8 @@ export async function listTasks(formData: FormData) {
     const data = await taskService.listTasks(
       session.id,
       session.role,
-      session.shootTeamIds,
-      session.opsWarehouseIds,
+      session.shootTeamIds ?? [],
+      session.opsWarehouseIds ?? [],
       {
         status: result.data.status,
         limit: result.data.limit,
