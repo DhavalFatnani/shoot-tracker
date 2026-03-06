@@ -3,6 +3,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function DashboardLoading() {
   return (
     <div className="space-y-6">
+      <p className="text-sm text-slate-500 dark:text-slate-400" aria-live="polite">
+        Loading…
+      </p>
       <div className="flex items-center gap-3">
         <Skeleton className="h-9 w-48" />
         <Skeleton className="h-9 w-32" />

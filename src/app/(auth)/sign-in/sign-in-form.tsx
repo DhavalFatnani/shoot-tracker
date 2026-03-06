@@ -21,13 +21,14 @@ export function SignInForm() {
       const { error: err } = await signInAction({ email, password });
       if (err) {
         setError(err);
+        setLoading(false);
         return;
       }
+      // Keep loading true until navigation completes so user sees "Signing in…" during redirect
       router.push("/dashboard");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   }

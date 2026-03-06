@@ -1,8 +1,7 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { profileById } from "@/lib/repositories/profile-repository";
-import { teamIdsByUserId } from "@/lib/repositories/team-repository";
-import { teamsByIds } from "@/lib/repositories/team-repository";
+import { profileWithTeamsById } from "@/lib/repositories/profile-repository";
 import { getDb } from "@/lib/db/client";
 import type { Role } from "@/lib/validations";
 
@@ -20,7 +19,27 @@ export interface SessionUser {
   opsWarehouseIds: string[];
 }
 
-export async function getSession(): Promise<SessionUser | null> {
+function buildSessionFromProfileWithTeams(
+  user: { id: string; email?: string | null },
+  data: { profile: { role: string; firstName?: string | null; lastName?: string | null }; teams: { id: string; type: string; warehouseId: string | null }[] }
+): SessionUser {
+  const { profile, teams } = data;
+  const teamIds = teams.map((t) => t.id);
+  const shootTeamIds = teams.filter((t) => t.type === "SHOOT").map((t) => t.id);
+  const opsWarehouseIds = teams.filter((t) => t.type === "OPS" && t.warehouseId).map((t) => t.warehouseId!);
+  return {
+    id: user.id,
+    email: user.email ?? undefined,
+    role: profile.role as Role,
+    firstName: profile.firstName ?? undefined,
+    lastName: profile.lastName ?? undefined,
+    teamIds,
+    shootTeamIds,
+    opsWarehouseIds,
+  };
+}
+
+export const getSession = cache(async (): Promise<SessionUser | null> => {
   let user: { id: string; email?: string | null } | null = null;
   try {
     const supabase = await createClient();
@@ -29,11 +48,8 @@ export async function getSession(): Promise<SessionUser | null> {
     if (!user) return null;
 
     const db = getDb();
-    const [profile, teamIds] = await Promise.all([
-      profileById(db, user.id),
-      teamIdsByUserId(db, user.id),
-    ]);
-    if (!profile) {
+    const data = await profileWithTeamsById(db, user.id);
+    if (!data) {
       return {
         id: user.id,
         email: user.email ?? undefined,
@@ -45,52 +61,16 @@ export async function getSession(): Promise<SessionUser | null> {
         opsWarehouseIds: [],
       };
     }
-
-    const teams = await teamsByIds(db, teamIds);
-    type TeamRow = { id: string; type: string; warehouseId: string | null };
-    const shootTeamIds = (teams as TeamRow[]).filter((t: TeamRow) => t.type === "SHOOT").map((t: TeamRow) => t.id);
-    const opsWarehouseIds = (teams as TeamRow[]).filter((t: TeamRow) => t.type === "OPS" && t.warehouseId).map((t: TeamRow) => t.warehouseId!);
-
-    return {
-      id: user.id,
-      email: user.email ?? undefined,
-      role: profile.role as Role,
-      firstName: profile.firstName ?? undefined,
-      lastName: profile.lastName ?? undefined,
-      teamIds,
-      shootTeamIds,
-      opsWarehouseIds,
-    };
+    return buildSessionFromProfileWithTeams(user, data);
   } catch {
-    // If we have a user but the first DB/profile fetch failed (e.g. transient error), retry once
-    // so the role doesn't randomly switch to Shoot when the DB hiccups.
     if (user) {
       try {
         const db = getDb();
-        const [profile, teamIds] = await Promise.all([
-          profileById(db, user.id),
-          teamIdsByUserId(db, user.id),
-        ]);
-        if (profile) {
-          const teams = await teamsByIds(db, teamIds);
-          type TeamRow = { id: string; type: string; warehouseId: string | null };
-          const shootTeamIds = (teams as TeamRow[]).filter((t: TeamRow) => t.type === "SHOOT").map((t: TeamRow) => t.id);
-          const opsWarehouseIds = (teams as TeamRow[]).filter((t: TeamRow) => t.type === "OPS" && t.warehouseId).map((t: TeamRow) => t.warehouseId!);
-          return {
-            id: user.id,
-            email: user.email ?? undefined,
-            role: profile.role as Role,
-            firstName: profile.firstName ?? undefined,
-            lastName: profile.lastName ?? undefined,
-            teamIds,
-            shootTeamIds,
-            opsWarehouseIds,
-          };
-        }
+        const data = await profileWithTeamsById(db, user.id);
+        if (data) return buildSessionFromProfileWithTeams(user, data);
       } catch {
-        // Retry also failed; use minimal session so user stays in the app.
+        // Retry failed
       }
-      // Use last known role from cookie so admins/ops don't appear as Shoot when DB fails
       let role: Role = "SHOOT_USER";
       try {
         const cookieStore = await cookies();
@@ -99,7 +79,7 @@ export async function getSession(): Promise<SessionUser | null> {
           role = lastRole as Role;
         }
       } catch {
-        // Cookie read failed; keep SHOOT_USER
+        // ignore
       }
       return {
         id: user.id,
@@ -114,4 +94,4 @@ export async function getSession(): Promise<SessionUser | null> {
     }
     return null;
   }
-}
+});
