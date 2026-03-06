@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { getBufferAgingList } from "@/app/actions/buffer-actions";
 import { formatDateTimeIST } from "@/lib/format-date";
+import { buildCsv, downloadCsv } from "@/lib/csv";
 
 type Item = { serialId: string; sku: string; currentLocation: string; updatedAt: Date | string; daysInBuffer: number };
 
@@ -27,10 +28,28 @@ export function BufferAgingTable({ initialItems }: { initialItems: Item[] }) {
     });
   }
 
+  function handleDownloadCsv() {
+    const headers = ["Serial", "SKU", "Location", "Days in buffer", "Updated"];
+    const rows = items.map((i) => [i.serialId, i.sku, i.currentLocation, i.daysInBuffer, formatDateTimeIST(i.updatedAt)]);
+    const csv = buildCsv(headers, rows);
+    downloadCsv(csv, `buffer-serials-${new Date().toISOString().slice(0, 10)}.csv`);
+  }
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
         <div className="flex flex-wrap items-end gap-3">
+          <button
+            type="button"
+            onClick={handleDownloadCsv}
+            disabled={items.length === 0}
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Download CSV
+          </button>
           <div>
             <label htmlFor="min-days" className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Min days in buffer

@@ -130,6 +130,34 @@ export async function listTaskSerials(formData: FormData) {
   return { success: true, data: res.data.taskSerials };
 }
 
+/** Export multi-task data for CSV: task + serial rows for given task IDs (max 50). */
+export async function exportMultiTaskData(taskIds: string[]) {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized", data: [] as { taskName: string; taskCode: string; serialId: string; sku: string; status: string }[] };
+  const ids = taskIds.slice(0, 50);
+  if (ids.length === 0) return { success: true, data: [] };
+  try {
+    const results = await Promise.all(ids.map((id) => taskService.getTask(id, session.id, session.role)));
+    const rows: { taskName: string; taskCode: string; serialId: string; sku: string; status: string }[] = [];
+    for (const r of results) {
+      const taskName = r.task.name ?? `Task ${r.task.serial}`;
+      const taskCode = `T-${String(r.task.serial).padStart(4, "0")}`;
+      for (const ts of r.taskSerials) {
+        rows.push({
+          taskName,
+          taskCode,
+          serialId: ts.serialId,
+          sku: ts.sku ?? "",
+          status: ts.status,
+        });
+      }
+    }
+    return { success: true, data: rows };
+  } catch (e) {
+    return { success: false, error: mapError(e), data: [] };
+  }
+}
+
 /** Serial IDs marked non-returnable for this task (for return-verify: highlight for OPS). */
 export async function getNonReturnableSerialsForTask(taskId: string) {
   const session = await getSession();

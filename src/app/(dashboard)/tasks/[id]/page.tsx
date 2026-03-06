@@ -14,6 +14,7 @@ import { getTaskStatusClass, getTaskSerialStatusClass, getDisputeStatusClass, ge
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatTaskSerial } from "@/lib/format-serials";
 import { TaskTimelineSidebar } from "./task-timeline-sidebar";
+import { TaskDetailCsvDownload } from "./task-detail-csv-download";
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -115,6 +116,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              <TaskDetailCsvDownload taskId={task.id} taskLabel={taskLabel} />
               {(session.role === "ADMIN" || session.role === "SHOOT_USER") && balance.received > 0 && task.status !== "CLOSED" && (
                 <Link
                   href={`/returns/create?taskId=${task.id}`}

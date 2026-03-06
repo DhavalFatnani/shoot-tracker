@@ -1,14 +1,9 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
-import { ClickableTableRow } from "@/components/ui/clickable-table-row";
-import { LinkWithStopPropagation } from "@/components/ui/link-with-stop-propagation";
 import { listTasks } from "@/app/actions/task-actions";
 import { TasksListFilters } from "./tasks-list-filters";
-import { getTaskStatusClass, getTaskStatusDisplayLabel } from "@/lib/status-colors";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { TasksEmptyState } from "@/components/empty-state";
-import { formatTaskSerial } from "@/lib/format-serials";
-import { formatDateTimeIST } from "@/lib/format-date";
+import { TasksTableWithSelection } from "./tasks-table-with-selection";
 
 const PAGE_SIZE = 20;
 const STATUS_OPTIONS = [
@@ -49,7 +44,6 @@ export default async function TasksPage({
     const receivedTaskIds = data?.receivedTaskIds ?? [];
     const hasNext = rawTasks.length > PAGE_SIZE;
     const tasks = rawTasks.slice(0, PAGE_SIZE);
-    const receivedSet = new Set(receivedTaskIds);
 
     return (
     <div className="space-y-6">
@@ -77,62 +71,7 @@ export default async function TasksPage({
 
       <TasksListFilters status={status} page={page} q={q} statusOptions={STATUS_OPTIONS} />
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
-            <tr>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Task</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Reason</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Status</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Created</th>
-              <th className="px-5 py-3.5"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
-            {tasks.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-5 py-8">
-                  <TasksEmptyState hasFilters={!!(q || status)} />
-                </td>
-              </tr>
-            )}
-            {tasks.map((t) => (
-              <ClickableTableRow key={t.id} href={`/tasks/${t.id}`}>
-                <td className="px-5 py-3.5">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{t.name ?? `Task ${formatTaskSerial(t.serial)}`}</p>
-                  <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{formatTaskSerial(t.serial)}</p>
-                </td>
-                <td className="px-5 py-3.5">
-                  {t.shootReason ? (
-                    <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700">
-                      {t.shootReason === "INHOUSE_SHOOT" ? "Inhouse" : t.shootReason === "AGENCY_SHOOT" ? "Agency" : t.shootReason === "INFLUENCER_FITS" ? "Influencer" : t.shootReason}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-zinc-400">—</span>
-                  )}
-                </td>
-                <td className="px-5 py-3.5">
-                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTaskStatusClass(t.status === "PICKING" && receivedSet.has(t.id) ? "RECEIVING" : t.status)}`}>
-                    {getTaskStatusDisplayLabel(t.status, false, receivedSet.has(t.id))}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{formatDateTimeIST(t.createdAt)}</td>
-                <td className="px-5 py-3.5 text-right">
-                  <LinkWithStopPropagation
-                    href={`/tasks/${t.id}`}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 transition duration-200 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
-                  >
-                    View
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                    </svg>
-                  </LinkWithStopPropagation>
-                </td>
-              </ClickableTableRow>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <TasksTableWithSelection tasks={tasks} receivedTaskIds={receivedTaskIds} hasFilters={!!(q || status)} />
 
       {(page > 1 || hasNext) && (
         <nav className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-700" aria-label="Pagination">
