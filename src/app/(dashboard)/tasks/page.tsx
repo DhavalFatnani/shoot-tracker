@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { listTasks } from "@/app/actions/task-actions";
 import { TasksListFilters } from "./tasks-list-filters";
 import { getTaskStatusClass, getTaskStatusLabel } from "@/lib/status-colors";
@@ -90,7 +91,7 @@ export default async function TasksPage({
               </tr>
             )}
             {tasks.map((t) => (
-              <tr key={t.id} className="transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50">
+              <ClickableTableRow key={t.id} href={`/tasks/${t.id}`}>
                 <td className="px-5 py-3.5">
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{t.name ?? `Task ${formatTaskSerial(t.serial)}`}</p>
                   <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{formatTaskSerial(t.serial)}</p>
@@ -113,6 +114,7 @@ export default async function TasksPage({
                 <td className="px-5 py-3.5 text-right">
                   <Link
                     href={`/tasks/${t.id}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 transition duration-200 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
                   >
                     View
@@ -121,7 +123,7 @@ export default async function TasksPage({
                     </svg>
                   </Link>
                 </td>
-              </tr>
+              </ClickableTableRow>
             ))}
           </tbody>
         </table>

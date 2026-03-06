@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { listActivityLogs } from "@/app/actions/activity-actions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { formatTaskSerial } from "@/lib/format-serials";
@@ -77,7 +78,7 @@ export default async function ActivityLogsPage({
               </tr>
             )}
             {list.map((row) => (
-              <tr key={row.id} className="transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50">
+              <ClickableTableRow key={row.id} href={`/tasks/${row.taskId}`}>
                 <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
                   {new Date(row.createdAt).toLocaleString()}
                 </td>
@@ -89,6 +90,7 @@ export default async function ActivityLogsPage({
                 <td className="px-5 py-3.5">
                   <Link
                     href={`/tasks/${row.taskId}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
                   >
                     {row.taskName ?? formatTaskSerial(row.taskSerial)}
@@ -103,7 +105,7 @@ export default async function ActivityLogsPage({
                 <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-400 text-xs">
                   {row.fromLocation} → {row.toLocation}
                 </td>
-              </tr>
+              </ClickableTableRow>
             ))}
           </tbody>
         </table>

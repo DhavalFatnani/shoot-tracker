@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
+import { ClickableTableRow } from "@/components/ui/clickable-table-row";
 import { listReturns } from "@/app/actions/return-actions";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ReturnsEmptyState } from "@/components/empty-state";
@@ -92,7 +93,7 @@ export default async function ReturnsPage({
                     ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200"
                     : "bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-200";
               return (
-              <tr key={r.id} className="transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50">
+              <ClickableTableRow key={r.id} href={`/returns/${r.id}`}>
                 <td className="px-5 py-3.5">
                   <span className="text-zinc-900 dark:text-zinc-100">{formatReturnSerial(r.serial)}</span>
                 </td>
@@ -112,6 +113,7 @@ export default async function ReturnsPage({
                 <td className="px-5 py-3.5 text-right">
                   <Link
                     href={`/returns/${r.id}`}
+                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 transition duration-200 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
                   >
                     View
@@ -120,7 +122,7 @@ export default async function ReturnsPage({
                     </svg>
                   </Link>
                 </td>
-              </tr>
+              </ClickableTableRow>
             );
             })}
           </tbody>
