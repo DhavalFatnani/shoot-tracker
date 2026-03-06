@@ -48,8 +48,8 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
     if (!user) return null;
 
     const db = getDb();
-    const data = await profileWithTeamsById(db, user.id);
-    if (!data) {
+    const profileData = await profileWithTeamsById(db, user.id);
+    if (!profileData) {
       return {
         id: user.id,
         email: user.email ?? undefined,
@@ -61,13 +61,13 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
         opsWarehouseIds: [],
       };
     }
-    return buildSessionFromProfileWithTeams(user, data);
+    return buildSessionFromProfileWithTeams(user, profileData);
   } catch {
     if (user) {
       try {
         const db = getDb();
-        const data = await profileWithTeamsById(db, user.id);
-        if (data) return buildSessionFromProfileWithTeams(user, data);
+        const profileData = await profileWithTeamsById(db, user.id);
+        if (profileData) return buildSessionFromProfileWithTeams(user, profileData);
       } catch {
         // Retry failed
       }
