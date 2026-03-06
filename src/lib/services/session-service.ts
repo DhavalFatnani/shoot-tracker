@@ -11,15 +11,9 @@ import * as eventRepo from "@/lib/repositories/event-repository";
 import * as disputeRepo from "@/lib/repositories/dispute-repository";
 import * as returnRepo from "@/lib/repositories/return-repository";
 import * as returnService from "@/lib/services/return-service";
-import { canSerialBeInSession } from "@/lib/domain/invariants";
 import { getLocationForTaskSerialStatus } from "@/lib/domain/task-serial-location";
 import type { StartSessionInput, AddScanInput, CommitSessionInput, CancelSessionInput, Role } from "@/lib/validations";
-import {
-  NotFoundError,
-  ForbiddenError,
-  InvariantViolationError,
-  ConcurrentSessionError,
-} from "@/lib/errors";
+import { NotFoundError, ForbiddenError, InvariantViolationError } from "@/lib/errors";
 
 const SESSION_TYPE_FROM_TO: Record<
   string,
@@ -83,10 +77,26 @@ export async function addScan(input: AddScanInput, userId: string) {
     return { ok: false, error: "DUPLICATE", message: "Serial already scanned in this session" };
   }
 
-  const openSessionsWithSerial = await sessionRepo.openSessionIdsContainingSerial(db, input.serialId);
-  const inOther = openSessionsWithSerial.some((r) => r.sessionId !== input.sessionId);
-  if (!canSerialBeInSession(inOther)) {
-    throw new ConcurrentSessionError(input.serialId);
+  // Default flow for all serials: if this serial is in any other OPEN session (abandoned/stale), cancel those sessions so the scan can proceed in the current session.
+  const openSessionsWithSerial = await sessionRepo.openSessionsContainingSerialWithOwner(db, input.serialId);
+  const otherSessions = openSessionsWithSerial.filter((r) => r.sessionId !== input.sessionId);
+  if (otherSessions.length > 0) {
+    await db.transaction(async (tx) => {
+      for (const s of otherSessions) {
+        await sessionRepo.cancelSession(tx, s.sessionId);
+      }
+      const taskIds = [...new Set(otherSessions.map((s) => s.taskId))];
+      for (const taskId of taskIds) {
+        const openSessions = await sessionRepo.openSessionsByTaskId(tx, taskId);
+        if (openSessions.length === 0) {
+          const lastType = otherSessions.find((s) => s.taskId === taskId)?.type;
+          const revertStatus = lastType ? TASK_STATUS_ON_COMMIT_OR_CANCEL[lastType] : undefined;
+          if (revertStatus) {
+            await taskRepo.updateTaskStatus(tx, taskId, revertStatus);
+          }
+        }
+      }
+    });
   }
 
   const location = await serialStateRepo.getLocation(db, input.serialId);

@@ -54,6 +54,20 @@ export function openSessionIdsContainingSerial(db: Database | Tx, serialId: stri
     .where(and(eq(sessions.status, "OPEN"), eq(sessionItems.serialId, serialId)));
 }
 
+/** OPEN sessions that contain this serial, with taskId, type, and startedBy (to allow cancelling stale sessions by same user). */
+export function openSessionsContainingSerialWithOwner(db: Database | Tx, serialId: string) {
+  return db
+    .selectDistinct({
+      sessionId: sessions.id,
+      taskId: sessions.taskId,
+      type: sessions.type,
+      startedBy: sessions.startedBy,
+    })
+    .from(sessions)
+    .innerJoin(sessionItems, eq(sessions.id, sessionItems.sessionId))
+    .where(and(eq(sessions.status, "OPEN"), eq(sessionItems.serialId, serialId)));
+}
+
 /** Committed sessions for a task (for task timeline). */
 export function committedSessionsByTaskId(db: Database | Tx, taskId: string) {
   return db
