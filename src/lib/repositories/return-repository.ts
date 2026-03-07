@@ -366,41 +366,48 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     serialsWithMeta = serialsWithMeta.map((row) => ({ ...row, sku: skuBySerial.get(row.serialId) ?? null }));
   }
 
-  // Deduplicate by serialId only: one row per physical serial in the return.
-  // If a serial appears in multiple tasks (data issue), keep one row and indicate "Multiple tasks".
-  const bySerialId = new Map<string, { serialId: string; sku: string | null; taskId: string; taskName: string | null; returnable: string; nonReturnReason: string | null; taskIds: string[]; taskNames: string[] }>();
+  // Canonical task per serial from task_serials (source of truth): each serial belongs to one task.
+  const returnTaskIds = [...new Set(sessionRows.map((s) => s.taskId))];
+  const serialIdsList = [...serialIds];
+  let serialToCanonicalTaskId = new Map<string, string>();
+  if (serialIdsList.length > 0 && returnTaskIds.length > 0) {
+    const tsRows = await db
+      .select({ taskId: taskSerials.taskId, serialId: taskSerials.serialId })
+      .from(taskSerials)
+      .where(
+        and(
+          inArray(taskSerials.serialId, serialIdsList),
+          inArray(taskSerials.taskId, returnTaskIds)
+        )
+      );
+    for (const row of tsRows) {
+      serialToCanonicalTaskId.set(row.serialId, row.taskId);
+    }
+  }
+
+  // Deduplicate by serialId; use canonical task from task_serials so we show the real task, not "Multiple tasks" from session overlap.
+  const bySerialId = new Map<string, { serialId: string; sku: string | null; taskId: string; taskName: string | null; returnable: string; nonReturnReason: string | null }>();
   for (const s of serialsWithMeta) {
     const existing = bySerialId.get(s.serialId);
+    const canonicalTaskId = serialToCanonicalTaskId.get(s.serialId) ?? s.taskId;
+    const canonicalTaskName = taskNameByTaskId.get(canonicalTaskId) ?? null;
     if (!existing) {
       bySerialId.set(s.serialId, {
         serialId: s.serialId,
         sku: s.sku,
-        taskId: s.taskId,
-        taskName: s.taskName,
+        taskId: canonicalTaskId,
+        taskName: canonicalTaskName,
         returnable: s.returnable,
         nonReturnReason: s.nonReturnReason,
-        taskIds: [s.taskId],
-        taskNames: s.taskName ? [s.taskName] : [],
       });
     } else {
-      if (!existing.taskIds.includes(s.taskId)) {
-        existing.taskIds.push(s.taskId);
-        if (s.taskName && !existing.taskNames.includes(s.taskName)) existing.taskNames.push(s.taskName);
-      }
       if (s.returnable === "0") {
         existing.returnable = "0";
         existing.nonReturnReason = s.nonReturnReason ?? existing.nonReturnReason;
       }
     }
   }
-  const uniqueSerials = Array.from(bySerialId.values()).map((s) => ({
-    serialId: s.serialId,
-    sku: s.sku,
-    taskId: s.taskId,
-    taskName: s.taskNames.length > 1 ? "Multiple tasks" : (s.taskNames[0] ?? s.taskName ?? null),
-    returnable: s.returnable,
-    nonReturnReason: s.nonReturnReason,
-  }));
+  const uniqueSerials = Array.from(bySerialId.values());
 
   return {
     id: r.id,
