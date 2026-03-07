@@ -71,7 +71,13 @@ export function openSessionsContainingSerialWithOwner(db: Database | Tx, serialI
 /** Committed sessions for a task (for task timeline). */
 export function committedSessionsByTaskId(db: Database | Tx, taskId: string) {
   return db
-    .select({ id: sessions.id, type: sessions.type, committedAt: sessions.committedAt })
+    .select({
+      id: sessions.id,
+      type: sessions.type,
+      startedBy: sessions.startedBy,
+      startedAt: sessions.startedAt,
+      committedAt: sessions.committedAt,
+    })
     .from(sessions)
     .where(and(eq(sessions.taskId, taskId), eq(sessions.status, "COMMITTED")))
     .orderBy(desc(sessions.committedAt));

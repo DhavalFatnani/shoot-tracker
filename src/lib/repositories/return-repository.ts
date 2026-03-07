@@ -1,6 +1,7 @@
 import { eq, desc, and, or, inArray, isNotNull, sql } from "drizzle-orm";
 import type { Database, Tx } from "@/lib/db/client";
-import { returns, sessions, sessionItems, tasks, serialRegistry, taskSerials } from "@/lib/db/schema";
+import { returns, sessions, sessionItems, tasks, serialRegistry, taskSerials, profiles } from "@/lib/db/schema";
+import { formatDisplayName } from "./profile-repository";
 
 export async function returnById(db: Database, returnId: string) {
   const rows = await db.select().from(returns).where(eq(returns.id, returnId)).limit(1);
@@ -192,27 +193,45 @@ export async function listReturnsWithSummary(db: Database, options: ListReturnsO
   });
 }
 
+export type ReturnSessionRow = {
+  sessionId: string;
+  taskId: string;
+  taskSerial: number;
+  taskName: string | null;
+  serialCount: number;
+  sessionType: string;
+  startedBy: string;
+  startedAt: Date;
+  committedAt: Date | null;
+  startedByName?: string | null;
+};
+
 export type ReturnWithSessions = {
   id: string;
   serial: number;
   name: string | null;
   createdBy: string;
+  createdByName?: string | null;
   createdAt: Date;
   dispatchedAt: Date | null;
   closedAt: Date | null;
-  sessions: { sessionId: string; taskId: string; taskSerial: number; taskName: string | null; serialCount: number }[];
+  sessions: ReturnSessionRow[];
   totalSerials: number;
-  /** Number of serials in this return that have been verified (task_serial status RETURNED) */
   verifiedCount: number;
-  /** All serials in this return (from session_items), with sku, returnable, nonReturnReason, taskId for OPS/non-returnable list */
   serials: { serialId: string; sku: string | null; taskId: string; taskName: string | null; returnable: string; nonReturnReason: string | null }[];
-  /** Shoot team IDs of tasks involved in this return (for SHOOT_USER access) */
   involvedShootTeamIds: string[];
 };
 
 export async function getReturnWithSessions(db: Database, returnId: string): Promise<ReturnWithSessions | null> {
   const r = await returnById(db, returnId);
   if (!r) return null;
+
+  const creatorRows = await db
+    .select({ firstName: profiles.firstName, lastName: profiles.lastName })
+    .from(profiles)
+    .where(eq(profiles.id, r.createdBy))
+    .limit(1);
+  const createdByName = creatorRows[0] ? formatDisplayName(creatorRows[0].firstName, creatorRows[0].lastName) : null;
 
   const sessionRows = await db
     .select({
@@ -221,9 +240,16 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
       taskSerial: tasks.serial,
       taskName: tasks.name,
       shootTeamId: tasks.shootTeamId,
+      sessionType: sessions.type,
+      startedBy: sessions.startedBy,
+      startedAt: sessions.startedAt,
+      committedAt: sessions.committedAt,
+      firstName: profiles.firstName,
+      lastName: profiles.lastName,
     })
     .from(sessions)
     .innerJoin(tasks, eq(sessions.taskId, tasks.id))
+    .leftJoin(profiles, eq(sessions.startedBy, profiles.id))
     .where(eq(sessions.returnId, returnId));
 
   const sessionIds = sessionRows.map((s) => s.sessionId);
@@ -235,6 +261,7 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
       serial: r.serial,
       name: r.name,
       createdBy: r.createdBy,
+      createdByName,
       createdAt: r.createdAt,
       dispatchedAt: r.dispatchedAt ?? null,
       closedAt: r.closedAt ?? null,
@@ -258,12 +285,17 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     serialIds.add(row.serialId);
   }
 
-  const sessionsList = sessionRows.map((s) => ({
+  const sessionsList: ReturnSessionRow[] = sessionRows.map((s) => ({
     sessionId: s.sessionId,
     taskId: s.taskId,
     taskSerial: s.taskSerial,
     taskName: s.taskName,
     serialCount: countBySession.get(s.sessionId) ?? 0,
+    sessionType: s.sessionType,
+    startedBy: s.startedBy,
+    startedAt: s.startedAt,
+    committedAt: s.committedAt,
+    startedByName: formatDisplayName(s.firstName, s.lastName),
   }));
 
   const totalSerials = sessionsList.reduce((n, s) => n + s.serialCount, 0);
@@ -331,6 +363,7 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     serial: r.serial,
     name: r.name,
     createdBy: r.createdBy,
+    createdByName,
     createdAt: r.createdAt,
     dispatchedAt: r.dispatchedAt ?? null,
     closedAt: r.closedAt ?? null,

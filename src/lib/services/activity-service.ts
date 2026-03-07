@@ -12,6 +12,7 @@ export type TaskTimelineEntry = {
   type: string;
   label: string;
   detail?: string;
+  by?: string | null;
 };
 
 const SESSION_TYPE_LABELS: Record<string, string> = {
@@ -30,6 +31,12 @@ export async function getTaskTimeline(taskId: string): Promise<TaskTimelineEntry
   ]);
   if (!task) return [];
 
+  const userIds = [
+    task.createdBy,
+    ...committed.map((s) => s.startedBy),
+  ].filter(Boolean);
+  const displayNames = await profileRepo.getDisplayNamesByIds(db, userIds);
+
   const entries: TaskTimelineEntry[] = [];
 
   if (task.createdAt) {
@@ -38,18 +45,21 @@ export async function getTaskTimeline(taskId: string): Promise<TaskTimelineEntry
       at: task.createdAt,
       type: "created",
       label: "Created",
+      by: displayNames.get(task.createdBy) ?? null,
     });
   }
 
   for (const s of committed) {
     if (s.committedAt) {
       const label = SESSION_TYPE_LABELS[s.type] ?? s.type;
+      const userName = displayNames.get(s.startedBy) ?? null;
       entries.push({
         id: `session-${s.id}`,
         at: s.committedAt,
         type: s.type.toLowerCase().replace(/_/g, "-"),
         label,
-        detail: s.type === "PICK" ? "Pick session completed" : s.type === "RECEIPT" ? "Receipt session completed" : undefined,
+        detail: userName ? `by ${userName}` : undefined,
+        by: userName,
       });
     }
   }

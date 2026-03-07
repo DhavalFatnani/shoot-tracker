@@ -71,7 +71,7 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{formatReturnSerial(data.serial)}</p>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Created {createdDate}
-            {createdByYou ? " · By you" : " · Shoot team"}
+            {createdByYou ? " · By you" : data.createdByName ? ` · By ${data.createdByName}` : " · Shoot team"}
             {dispatchedDate ? ` · Dispatched ${dispatchedDate}` : " · Return created (at shoot)"}
             {closedDate ? ` · Closed ${closedDate}` : null}
           </p>
@@ -202,6 +202,50 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
       </div>
+
+      {/* Scan sessions: who scanned, when, what type */}
+      {data.sessions.length > 0 && (
+        <div className="section-card">
+          <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-700">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Scan sessions</h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              Who scanned, session type, and when it was committed.
+            </p>
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+            {data.sessions.map((s) => (
+              <div key={s.sessionId} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400">
+                    {(s.startedByName ?? "?").charAt(0).toUpperCase()}
+                  </span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {s.startedByName ?? "Unknown user"}
+                  </span>
+                </div>
+                <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  s.sessionType === "RETURN_SCAN"
+                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                    : s.sessionType === "RETURN_VERIFY"
+                      ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300"
+                      : "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                }`}>
+                  {s.sessionType === "RETURN_SCAN" ? "Return scan" : s.sessionType === "RETURN_VERIFY" ? "Return verify" : s.sessionType}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {s.taskName ?? formatTaskSerial(s.taskSerial)}
+                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {s.serialCount} serial{s.serialCount !== 1 ? "s" : ""}
+                </span>
+                <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+                  {s.committedAt ? formatDateTimeIST(s.committedAt) : formatDateTimeIST(s.startedAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="section-card">
         <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-700">

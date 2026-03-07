@@ -7,6 +7,7 @@ export type TimelineEntry = {
   type: string;
   label: string;
   detail?: string;
+  by?: string | null;
 };
 
 export function TaskTimelineSidebar({ timeline }: { timeline: TimelineEntry[] }) {
@@ -40,10 +41,15 @@ export function TaskTimelineSidebar({ timeline }: { timeline: TimelineEntry[] })
                   </span>
                   <div className="min-w-0 flex-1 pt-0">
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{entry.label}</p>
-                    {entry.detail && (
+                    {entry.by && (
+                      <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-300">
+                        by {entry.by}
+                      </p>
+                    )}
+                    {entry.detail && !entry.by && (
                       <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{entry.detail}</p>
                     )}
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
                       {formatDateTimeIST(entry.at)}
                     </p>
                   </div>

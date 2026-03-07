@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useMemo } from "react";
+import { useState, useTransition, useRef, useMemo, useCallback, useEffect } from "react";
 import { startSession, addScan, commitSession, cancelSession } from "@/app/actions/session-actions";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -9,6 +9,10 @@ import { CameraBarcodeScanner } from "@/components/camera-barcode-scanner";
 import { useToast } from "@/components/ui/toaster";
 
 type SessionItem = { sessionId: string; serialId: string; scanStatus: string; errorReason: string | null; scannedAt: number };
+
+function vibrate(pattern: number | number[]) {
+  try { navigator?.vibrate?.(pattern); } catch {}
+}
 
 type SessionType = "PICK" | "RECEIPT" | "RETURN_SCAN" | "RETURN_VERIFY";
 
@@ -62,11 +66,23 @@ export function ScanSessionUI({
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelPending, setCancelPending] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [lastScannedSerial, setLastScannedSerial] = useState<string | null>(null);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
   const { toast } = useToast();
   const lastInputTimeRef = useRef(0);
   const prevLenRef = useRef(0);
   const scanningRef = useRef(false);
+
+  const flashHighlight = useCallback((serialId: string) => {
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    setLastScannedSerial(serialId);
+    highlightTimerRef.current = setTimeout(() => setLastScannedSerial(null), 2500);
+  }, []);
+
+  useEffect(() => {
+    return () => { if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current); };
+  }, []);
   /** Max ms between key events to treat as scanner (not human typing). Barcode scanners are typically <10ms. */
   const SCANNER_THRESHOLD_MS = 20;
   /** Serial numbers are exactly 10 digits. */
@@ -105,25 +121,36 @@ export function ScanSessionUI({
         if (result.success && result.data) {
           const isDuplicate = result.data.ok === false && result.data.error === "DUPLICATE";
           if (isDuplicate) {
-            setMessage(result.data?.message ?? "Serial already scanned in this session");
-            toast(result.data?.message ?? "Serial already scanned in this session", { variant: "error" });
+            const prev = items.find((i) => i.serialId === serial);
+            const dupMsg = prev
+              ? `#${serial} was already scanned at ${formatScannedTime(prev.scannedAt)}`
+              : `#${serial} already scanned in this session`;
+            setMessage(dupMsg);
+            toast(dupMsg, { variant: "error" });
+            vibrate([100, 50, 100, 50, 100]);
+            if (prev) flashHighlight(serial);
             setScanInput("");
             prevLenRef.current = 0;
             scanningRef.current = false;
           } else {
+            const isError = result.data?.ok === false;
+            vibrate(isError ? [200, 100, 200] : [80]);
             setItems((prev) => [
               ...prev,
               { sessionId, serialId: serial, scanStatus: result.data!.scanStatus ?? "OK", errorReason: result.data?.errorReason ?? null, scannedAt: Date.now() },
             ]);
+            flashHighlight(serial);
             setScanInput("");
             prevLenRef.current = 0;
             scanningRef.current = false;
-            setMessage(result.data?.ok === false ? (result.data?.message ?? "Error") : null);
+            setMessage(isError ? (result.data?.message ?? "Error") : null);
           }
         } else {
+          vibrate([200, 100, 200]);
           setMessage(result.error ?? "Failed to add scan");
         }
       } catch (e) {
+        vibrate([200, 100, 200]);
         setMessage(e instanceof Error ? e.message : "Something went wrong. Please try again.");
       }
     });
@@ -451,33 +478,44 @@ export function ScanSessionUI({
                       </tr>
                     </thead>
                     <tbody>
-                      {items.map((item, idx) => (
-                        <tr
-                          key={idx}
-                          className={`border-b border-slate-100 last:border-0 dark:border-slate-800 ${
-                            sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId)
-                              ? "bg-amber-50/50 dark:bg-amber-900/10"
-                              : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                          }`}
-                        >
-                          <td className="px-4 py-2.5 font-mono text-sm">
-                            <span className={item.scanStatus === "ERROR" ? "text-red-600 dark:text-red-400" : "text-indigo-600 dark:text-indigo-400"}>
-                              #{item.serialId}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">—</td>
-                          <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
-                            {formatScannedTime(item.scannedAt)}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            {item.scanStatus === "ERROR" ? (
-                              <span className="font-medium text-red-600 dark:text-red-400">Unrecognized</span>
-                            ) : (
-                              <span className="font-medium text-emerald-600 dark:text-emerald-400">Verified</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {items.map((item, idx) => {
+                        const isHighlighted = lastScannedSerial === item.serialId;
+                        const isNonReturnable = sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId);
+                        return (
+                          <tr
+                            key={idx}
+                            className={`border-b border-slate-100 last:border-0 transition-colors duration-700 dark:border-slate-800 ${
+                              isHighlighted
+                                ? "bg-indigo-100 dark:bg-indigo-900/30"
+                                : isNonReturnable
+                                  ? "bg-amber-50/50 dark:bg-amber-900/10"
+                                  : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                            }`}
+                          >
+                            <td className="px-4 py-2.5 font-mono text-sm">
+                              <span className={item.scanStatus === "ERROR" ? "text-red-600 dark:text-red-400" : "text-indigo-600 dark:text-indigo-400"}>
+                                #{item.serialId}
+                              </span>
+                              {isHighlighted && (
+                                <span className="ml-2 inline-flex animate-pulse rounded-full bg-indigo-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                                  JUST SCANNED
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">—</td>
+                            <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                              {formatScannedTime(item.scannedAt)}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              {item.scanStatus === "ERROR" ? (
+                                <span className="font-medium text-red-600 dark:text-red-400">Unrecognized</span>
+                              ) : (
+                                <span className="font-medium text-emerald-600 dark:text-emerald-400">Verified</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

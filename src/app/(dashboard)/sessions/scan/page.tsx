@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
 import { taskById } from "@/lib/repositories/task-repository";
+import { returnIdByTaskId } from "@/lib/repositories/return-repository";
 import { getDb } from "@/lib/db/client";
 import { ScanSessionUI } from "./scan-session-ui";
 import { listTasks, getNonReturnableSerialsForTask } from "@/app/actions/task-actions";
@@ -16,19 +17,23 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
   const session = await getSession();
   if (!session) return null;
 
-  const isReturnVerify = type === "RETURN_VERIFY";
+  const isReturnType = type === "RETURN_VERIFY" || type === "RETURN_SCAN";
 
   let task: Awaited<ReturnType<typeof taskById>> | null = null;
   let nonReturnableSerialIds: string[] = [];
   let tasksForPicker: { id: string; name: string | null; status: string; serial: number }[] = [];
+  let hasReturn = true;
 
   if (taskId) {
-    const [taskResult, nonReturnableResult] = await Promise.all([
-      taskById(getDb(), taskId),
-      isReturnVerify ? getNonReturnableSerialsForTask(taskId) : Promise.resolve(null),
+    const db = getDb();
+    const [taskResult, nonReturnableResult, returnId] = await Promise.all([
+      taskById(db, taskId),
+      isReturnType ? getNonReturnableSerialsForTask(taskId) : Promise.resolve(null),
+      isReturnType ? returnIdByTaskId(db, taskId) : Promise.resolve("skip"),
     ]);
     task = taskResult;
     nonReturnableSerialIds = nonReturnableResult?.success && nonReturnableResult.data ? nonReturnableResult.data : [];
+    hasReturn = returnId !== null;
   } else {
     const formData = new FormData();
     formData.set("limit", "50");
@@ -100,7 +105,29 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
           </Link>
         </div>
       )}
-      {taskId && task && !taskClosed && (
+      {taskId && task && !taskClosed && isReturnType && !hasReturn && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
+          <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200">No return raised</h2>
+          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
+            A return must be created before starting a return scan or return verify session. Ask the shoot team to create a return first.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href={`/returns/create?taskId=${task.id}`}
+              className="btn btn-primary"
+            >
+              Create return
+            </Link>
+            <Link
+              href={`/tasks/${task.id}`}
+              className="btn btn-secondary"
+            >
+              Back to task
+            </Link>
+          </div>
+        </div>
+      )}
+      {taskId && task && !taskClosed && (!isReturnType || hasReturn) && (
         <ScanSessionUI
           taskId={taskId}
           userRole={session.role}

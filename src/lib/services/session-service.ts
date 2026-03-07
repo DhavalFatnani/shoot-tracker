@@ -48,8 +48,11 @@ export async function startSession(input: StartSessionInput, userId: string, _us
   let sessionId: string;
   await db.transaction(async (tx) => {
     let returnId: string | null = null;
-    if (input.type === "RETURN_VERIFY") {
+    if (input.type === "RETURN_VERIFY" || input.type === "RETURN_SCAN") {
       returnId = await returnRepo.returnIdByTaskId(tx, input.taskId);
+      if (!returnId) {
+        throw new InvariantViolationError("Cannot start a return session — no return has been raised for this task yet. Create a return first.");
+      }
     }
     sessionId = await sessionRepo.createSession(tx, {
       taskId: input.taskId,
