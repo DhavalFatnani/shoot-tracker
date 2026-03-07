@@ -40,21 +40,18 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
   const nonReturnableSerials = data.serials.filter((s) => s.returnable === "0");
   const returnLabel = data.name ?? formatReturnSerial(data.serial);
 
-  // Deduplicate by taskId: same task can have multiple RETURN_VERIFY sessions
+  // One row per task; serial count = unique serials for that task (not scan + verify summed)
   const tasksInReturn = (() => {
     const byTask = new Map<string, { taskId: string; taskSerial: number; taskName: string | null; serialCount: number }>();
     for (const s of data.sessions) {
-      const existing = byTask.get(s.taskId);
-      if (existing) {
-        existing.serialCount += s.serialCount;
-      } else {
-        byTask.set(s.taskId, {
-          taskId: s.taskId,
-          taskSerial: s.taskSerial,
-          taskName: s.taskName,
-          serialCount: s.serialCount,
-        });
-      }
+      if (byTask.has(s.taskId)) continue;
+      const uniqueCount = data.uniqueSerialCountByTaskId[s.taskId] ?? 0;
+      byTask.set(s.taskId, {
+        taskId: s.taskId,
+        taskSerial: s.taskSerial,
+        taskName: s.taskName,
+        serialCount: uniqueCount,
+      });
     }
     return Array.from(byTask.values());
   })();
@@ -107,7 +104,7 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
           {canDispatch && <ReturnDispatchButton returnId={data.id} />}
           {isOpsOrAdmin && !data.closedAt && tasksInReturn.length > 0 && (
             <Link
-              href={`/sessions/scan?taskId=${tasksInReturn[0].taskId}&type=RETURN_VERIFY`}
+              href={`/sessions/scan?taskId=${tasksInReturn[0].taskId}&type=RETURN_VERIFY&autoStart=1`}
               className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 transition-colors hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-200 dark:hover:bg-amber-900/70"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -175,7 +172,7 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
               <tbody>
                 {data.serials.map((s, idx) => (
                   <tr
-                    key={`${s.serialId}-${s.taskId}`}
+                    key={s.serialId}
                     className={s.returnable === "0" ? "bg-amber-50/80 dark:bg-amber-900/20" : ""}
                   >
                     <td className="table-td">{idx + 1}</td>
@@ -297,7 +294,7 @@ export default async function ReturnDetailPage({ params }: { params: Promise<{ i
                           Raise dispute
                         </Link>
                         <Link
-                          href={`/sessions/scan?taskId=${t.taskId}&type=RETURN_VERIFY`}
+                          href={`/sessions/scan?taskId=${t.taskId}&type=RETURN_VERIFY&autoStart=1`}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-100 px-3 py-2 text-sm font-medium text-indigo-800 transition-colors hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-200 dark:hover:bg-indigo-900/70"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

@@ -37,9 +37,11 @@ export async function createRequest(
     (input.serials ?? []).map((s) => [s.serial_id, s.sku])
   );
 
+  const uniqueSerialIds = [...new Set(input.serialIds)];
+
   const [registryRows, stateRows] = await Promise.all([
-    serialRegistryRepo.serialRegistryByIds(db, input.serialIds),
-    serialStateRepo.getLocationsForSerials(db, input.serialIds),
+    serialRegistryRepo.serialRegistryByIds(db, uniqueSerialIds),
+    serialStateRepo.getLocationsForSerials(db, uniqueSerialIds),
   ]);
   const registryMap = new Map(registryRows.map((r) => [r.serialId, r]));
   const stateMap = new Map(stateRows.map((r) => [r.serialId, r.currentLocation]));
@@ -48,7 +50,7 @@ export async function createRequest(
   const eligible: string[] = [];
   const ineligible: string[] = [];
 
-  for (const serialId of input.serialIds) {
+  for (const serialId of uniqueSerialIds) {
     const reg = registryMap.get(serialId);
     const location = stateMap.get(serialId) ?? null;
 

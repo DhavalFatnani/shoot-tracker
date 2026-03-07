@@ -51,6 +51,20 @@ export async function nonReturnableSerialIdsForTask(db: Database | Tx, taskId: s
   return rows.map((r) => r.serialId);
 }
 
+/** Non-returnable serials with their reasons (for auto-dispute on return). */
+export async function nonReturnableSerialsWithReason(
+  db: Database | Tx,
+  taskId: string,
+  serialIds: string[]
+): Promise<{ serialId: string; reason: string | null }[]> {
+  if (serialIds.length === 0) return [];
+  const rows = await db
+    .select({ serialId: taskSerials.serialId, nonReturnReason: taskSerials.nonReturnReason })
+    .from(taskSerials)
+    .where(and(eq(taskSerials.taskId, taskId), eq(taskSerials.returnable, "0"), inArray(taskSerials.serialId, serialIds)));
+  return rows.map((r) => ({ serialId: r.serialId, reason: r.nonReturnReason }));
+}
+
 export async function taskSerialCountsByStatus(db: Database | Tx, taskId: string): Promise<Map<TaskSerialStatus, number>> {
   const rows = await db
     .select({ status: taskSerials.status, count: sql<number>`count(*)::int` })
@@ -72,8 +86,9 @@ export async function insertTaskSerials(
   returnOverrides?: Map<string, string>
 ) {
   if (serialIds.length === 0) return;
+  const unique = [...new Set(serialIds)];
   await tx.insert(taskSerials).values(
-    serialIds.map((serialId) => {
+    unique.map((serialId) => {
       const nonReturnReason = returnOverrides?.get(serialId);
       return {
         taskId,
@@ -83,7 +98,7 @@ export async function insertTaskSerials(
         nonReturnReason: nonReturnReason ?? null,
       };
     })
-  );
+  ).onConflictDoNothing();
 }
 
 export async function updateTaskSerialStatus(

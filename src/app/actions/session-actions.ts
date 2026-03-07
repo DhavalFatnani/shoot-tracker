@@ -78,8 +78,8 @@ export async function commitSession(formData: FormData) {
   if (!result.success) return { success: false, error: "Validation failed" };
 
   try {
-    await sessionService.commitSession(result.data, session.id);
-    return { success: true };
+    const { autoDisputeCount } = await sessionService.commitSession(result.data, session.id);
+    return { success: true, autoDisputeCount };
   } catch (e) {
     return { success: false, error: mapError(e) };
   }

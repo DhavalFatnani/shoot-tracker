@@ -5,15 +5,17 @@ import { returnIdByTaskId } from "@/lib/repositories/return-repository";
 import { getDb } from "@/lib/db/client";
 import { ScanSessionUI } from "./scan-session-ui";
 import { listTasks, getNonReturnableSerialsForTask } from "@/app/actions/task-actions";
+import { listReturns } from "@/app/actions/return-actions";
 import { getTaskStatusClass, getTaskStatusLabel } from "@/lib/status-colors";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { formatTaskSerial } from "@/lib/format-serials";
+import { formatTaskSerial, formatReturnSerial } from "@/lib/format-serials";
 
 const VALID_SESSION_TYPES = ["PICK", "RECEIPT", "RETURN_SCAN", "RETURN_VERIFY"] as const;
 
-export default async function ScanSessionPage({ searchParams }: { searchParams: Promise<{ taskId?: string; type?: string }> }) {
-  const { taskId, type } = await searchParams;
+export default async function ScanSessionPage({ searchParams }: { searchParams: Promise<{ taskId?: string; type?: string; autoStart?: string }> }) {
+  const { taskId, type, autoStart } = await searchParams;
   const defaultSessionType = type && VALID_SESSION_TYPES.includes(type as (typeof VALID_SESSION_TYPES)[number]) ? type : undefined;
+  const shouldAutoStart = autoStart === "1" && !!taskId && !!defaultSessionType;
   const session = await getSession();
   if (!session) return null;
 
@@ -22,6 +24,7 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
   let task: Awaited<ReturnType<typeof taskById>> | null = null;
   let nonReturnableSerialIds: string[] = [];
   let tasksForPicker: { id: string; name: string | null; status: string; serial: number }[] = [];
+  let returnsForPicker: { id: string; serial: number; name: string | null; totalSerials: number; closedAt: Date | null }[] = [];
   let hasReturn = true;
 
   if (taskId) {
@@ -37,15 +40,29 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
   } else {
     const formData = new FormData();
     formData.set("limit", "50");
-    const result = await listTasks(formData);
-    if (result.success && result.data?.tasks) {
-      tasksForPicker = result.data.tasks
+    const [tasksResult, returnsResult] = await Promise.all([
+      listTasks(formData),
+      listReturns(formData),
+    ]);
+    if (tasksResult.success && tasksResult.data?.tasks) {
+      tasksForPicker = tasksResult.data.tasks
         .filter((t) => t.status !== "CLOSED")
         .map((t) => ({
           id: t.id,
           name: t.name ?? null,
           status: t.status,
           serial: t.serial,
+        }));
+    }
+    if (returnsResult.success && returnsResult.data) {
+      returnsForPicker = returnsResult.data
+        .filter((r) => !r.closedAt)
+        .map((r) => ({
+          id: r.id,
+          serial: r.serial,
+          name: r.name,
+          totalSerials: r.totalSerials,
+          closedAt: r.closedAt,
         }));
     }
   }
@@ -83,6 +100,37 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
                   <span className="font-medium text-slate-900 dark:text-slate-100">{t.name ?? formatTaskSerial(t.serial)}</span>
                   <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getTaskStatusClass(t.status)}`}>
                     {getTaskStatusLabel(t.status)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!taskId && returnsForPicker.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="border-b border-slate-100 px-5 py-3 dark:border-slate-700">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Open returns</h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Select a return to start return processing.</p>
+          </div>
+          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
+            {returnsForPicker.map((r) => (
+              <li key={r.id}>
+                <Link
+                  href={`/returns/${r.id}`}
+                  className="flex items-center justify-between px-5 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-700"
+                >
+                  <div>
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                      {r.name ?? formatReturnSerial(r.serial)}
+                    </span>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {r.totalSerials} serial{r.totalSerials !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                    Open
                   </span>
                 </Link>
               </li>
@@ -135,6 +183,7 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
           nonReturnableSerialIds={nonReturnableSerialIds}
           taskDisplayName={task.name ?? formatTaskSerial(task.serial)}
           taskSerial={formatTaskSerial(task.serial)}
+          autoStart={shouldAutoStart}
         />
       )}
     </div>

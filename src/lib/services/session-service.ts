@@ -86,6 +86,11 @@ export async function addScan(input: AddScanInput, userId: string) {
     return { ok: false, error: "DUPLICATE", message: "Serial already scanned in this session" };
   }
 
+  const alreadyCommitted = await sessionItemRepo.isSerialCommittedForTask(db, session.taskId, input.serialId);
+  if (alreadyCommitted) {
+    return { ok: false, error: "DUPLICATE", message: "Serial already processed in a previous session for this task" };
+  }
+
   const otherSessions = openSessionsWithSerial.filter((r) => r.sessionId !== input.sessionId);
   if (otherSessions.length > 0) {
     await db.transaction(async (tx) => {
@@ -140,12 +145,13 @@ export async function addScan(input: AddScanInput, userId: string) {
   return { ok: true, scanStatus: scanOk ? "OK" : "ERROR", errorReason };
 }
 
-export async function commitSession(input: CommitSessionInput, userId: string) {
+export async function commitSession(input: CommitSessionInput, userId: string): Promise<{ autoDisputeCount: number }> {
   const db = getDb();
   const session = await sessionRepo.sessionById(db, input.sessionId);
   if (!session) throw new NotFoundError("Session", input.sessionId);
   if (session.status !== "OPEN") throw new InvariantViolationError("Session is not open");
 
+  let autoDisputeCount = 0;
   await db.transaction(async (tx) => {
     const items = await tx
       .select()
@@ -201,6 +207,29 @@ export async function commitSession(input: CommitSessionInput, userId: string) {
       if (notFoundLocation) await serialStateRepo.upsertLocations(tx, errorSerialIds, notFoundLocation);
     }
 
+    if (
+      (session.type === "RETURN_SCAN" || session.type === "RETURN_VERIFY") &&
+      okSerialIds.length > 0
+    ) {
+      const nonReturnables = await taskSerialRepo.nonReturnableSerialsWithReason(
+        tx,
+        session.taskId,
+        okSerialIds
+      );
+      for (const nr of nonReturnables) {
+        await disputeRepo.createDispute(tx, {
+          taskId: session.taskId,
+          serialId: nr.serialId,
+          disputeType: "NON_RETURNABLE_RETURNED",
+          description: nr.reason
+            ? `Auto-raised: non-returnable serial returned. Reason marked: ${nr.reason}`
+            : "Auto-raised: non-returnable serial was returned",
+          raisedBy: userId,
+        });
+      }
+      autoDisputeCount = nonReturnables.length;
+    }
+
     await sessionRepo.commitSession(tx, input.sessionId);
 
     // Revert task status: if no other open session, revert to stable state; else match remaining open session
@@ -238,6 +267,7 @@ export async function commitSession(input: CommitSessionInput, userId: string) {
       }
     }
   });
+  return { autoDisputeCount };
 }
 
 const TASK_STATUS_ON_COMMIT_OR_CANCEL: Record<string, string> = {

@@ -10,6 +10,12 @@ import { useToast } from "@/components/ui/toaster";
 
 type SessionItem = { sessionId: string; serialId: string; scanStatus: string; errorReason: string | null; scannedAt: number };
 
+type ScanFeedback = {
+  serialId: string;
+  status: "OK" | "ERROR" | "DUPLICATE";
+  message: string;
+};
+
 function vibrate(pattern: number | number[]) {
   try { navigator?.vibrate?.(pattern); } catch {}
 }
@@ -45,6 +51,7 @@ export function ScanSessionUI({
   nonReturnableSerialIds = [],
   taskDisplayName,
   taskSerial,
+  autoStart = false,
 }: {
   taskId: string;
   userRole: string;
@@ -52,6 +59,7 @@ export function ScanSessionUI({
   nonReturnableSerialIds?: string[];
   taskDisplayName?: string;
   taskSerial?: string;
+  autoStart?: boolean;
 }) {
   const allowedTypes = SESSION_TYPES_BY_ROLE[userRole] ?? SESSION_TYPES_BY_ROLE.ADMIN;
   const initialType: SessionType =
@@ -67,6 +75,8 @@ export function ScanSessionUI({
   const [cancelPending, setCancelPending] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [lastScannedSerial, setLastScannedSerial] = useState<string | null>(null);
+  const [scanFeedback, setScanFeedback] = useState<ScanFeedback | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
   const { toast } = useToast();
@@ -80,9 +90,19 @@ export function ScanSessionUI({
     highlightTimerRef.current = setTimeout(() => setLastScannedSerial(null), 2500);
   }, []);
 
-  useEffect(() => {
-    return () => { if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current); };
+  const showScanFeedback = useCallback((fb: ScanFeedback) => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    setScanFeedback(fb);
+    feedbackTimerRef.current = setTimeout(() => setScanFeedback(null), 2000);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
+
   /** Max ms between key events to treat as scanner (not human typing). Barcode scanners are typically <10ms. */
   const SCANNER_THRESHOLD_MS = 20;
   /** Serial numbers are exactly 10 digits. */
@@ -109,6 +129,14 @@ export function ScanSessionUI({
     });
   }
 
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (autoStart && !autoStartedRef.current && !sessionId) {
+      autoStartedRef.current = true;
+      handleStartSession();
+    }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
   function submitSerial(serial: string) {
     if (!sessionId || !SERIAL_DIGITS_ONLY.test(serial)) return;
     setMessage(null);
@@ -123,11 +151,11 @@ export function ScanSessionUI({
           if (isDuplicate) {
             const prev = items.find((i) => i.serialId === serial);
             const dupMsg = prev
-              ? `#${serial} was already scanned at ${formatScannedTime(prev.scannedAt)}`
-              : `#${serial} already scanned in this session`;
+              ? `Already scanned at ${formatScannedTime(prev.scannedAt)}`
+              : "Already scanned in this session";
             setMessage(dupMsg);
-            toast(dupMsg, { variant: "error" });
             vibrate([100, 50, 100, 50, 100]);
+            showScanFeedback({ serialId: serial, status: "DUPLICATE", message: dupMsg });
             if (prev) flashHighlight(serial);
             setScanInput("");
             prevLenRef.current = 0;
@@ -140,6 +168,13 @@ export function ScanSessionUI({
               { sessionId, serialId: serial, scanStatus: result.data!.scanStatus ?? "OK", errorReason: result.data?.errorReason ?? null, scannedAt: Date.now() },
             ]);
             flashHighlight(serial);
+            showScanFeedback({
+              serialId: serial,
+              status: isError ? "ERROR" : "OK",
+              message: isError
+                ? (result.data?.errorReason ?? "Unrecognized serial")
+                : "Scanned successfully",
+            });
             setScanInput("");
             prevLenRef.current = 0;
             scanningRef.current = false;
@@ -175,7 +210,15 @@ export function ScanSessionUI({
       try {
         const result = await commitSession(formData);
         if (result.success) {
-          toast("Session committed successfully.", { variant: "success" });
+          const disputeCount = (result as { autoDisputeCount?: number }).autoDisputeCount ?? 0;
+          if (disputeCount > 0) {
+            toast(
+              `Session committed. ${disputeCount} auto-dispute${disputeCount !== 1 ? "s" : ""} raised for non-returnable item${disputeCount !== 1 ? "s" : ""}.`,
+              { variant: "success" }
+            );
+          } else {
+            toast("Session committed successfully.", { variant: "success" });
+          }
           setSessionId(null);
           setItems([]);
           router.refresh();
@@ -327,10 +370,11 @@ export function ScanSessionUI({
         </div>
       ) : (
         <>
-          {sessionType === "RETURN_VERIFY" && nonReturnableSet.size > 0 && (
+          {(sessionType === "RETURN_VERIFY" || sessionType === "RETURN_SCAN") && nonReturnableSet.size > 0 && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
               <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                This task has {nonReturnableSet.size} non-returnable item{nonReturnableSet.size !== 1 ? "s" : ""} in the return. Check with shoot team when you scan them.
+                This task has {nonReturnableSet.size} non-returnable item{nonReturnableSet.size !== 1 ? "s" : ""}.
+                They can still be scanned &mdash; a dispute will be auto-raised on commit for team discussion.
               </p>
             </div>
           )}
@@ -480,7 +524,7 @@ export function ScanSessionUI({
                     <tbody>
                       {items.map((item, idx) => {
                         const isHighlighted = lastScannedSerial === item.serialId;
-                        const isNonReturnable = sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId);
+                        const isNonReturnable = (sessionType === "RETURN_VERIFY" || sessionType === "RETURN_SCAN") && nonReturnableSet.has(item.serialId);
                         return (
                           <tr
                             key={idx}
@@ -580,6 +624,46 @@ export function ScanSessionUI({
               </div>
             </div>
           </div>
+
+          {/* Scan feedback popup */}
+          {scanFeedback && (
+            <div className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center">
+              <div
+                className={`pointer-events-auto animate-in fade-in zoom-in-95 flex w-[min(calc(100vw-3rem),20rem)] flex-col items-center gap-3 rounded-2xl p-6 shadow-2xl ${
+                  scanFeedback.status === "OK"
+                    ? "bg-emerald-600 text-white"
+                    : scanFeedback.status === "DUPLICATE"
+                      ? "bg-amber-500 text-white"
+                      : "bg-red-600 text-white"
+                }`}
+                onClick={() => setScanFeedback(null)}
+                role="status"
+                aria-live="assertive"
+              >
+                {scanFeedback.status === "OK" && (
+                  <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {scanFeedback.status === "DUPLICATE" && (
+                  <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01M12 3a9 9 0 100 18 9 9 0 000-18z" />
+                  </svg>
+                )}
+                {scanFeedback.status === "ERROR" && (
+                  <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                )}
+                <p className="text-center font-mono text-xl font-bold tracking-wide">
+                  #{scanFeedback.serialId}
+                </p>
+                <p className="text-center text-sm font-medium opacity-90">
+                  {scanFeedback.message}
+                </p>
+              </div>
+            </div>
+          )}
 
           <ConfirmDialog
             open={cancelDialogOpen}

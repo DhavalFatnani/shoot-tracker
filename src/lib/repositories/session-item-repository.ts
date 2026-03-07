@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import type { Database, Tx } from "@/lib/db/client";
-import { sessionItems } from "@/lib/db/schema";
+import { sessionItems, sessions } from "@/lib/db/schema";
 
 export function sessionItemsBySessionId(db: Database | Tx, sessionId: string) {
   return db.select().from(sessionItems).where(eq(sessionItems.sessionId, sessionId));
@@ -20,5 +20,27 @@ export async function insertSessionItem(
     serialId: row.serialId,
     scanStatus: row.scanStatus,
     errorReason: row.errorReason ?? null,
-  });
+  }).onConflictDoNothing();
+}
+
+/** Check if a serial was already scanned (OK) in a committed session for the given task. */
+export async function isSerialCommittedForTask(
+  db: Database | Tx,
+  taskId: string,
+  serialId: string
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: sessionItems.sessionId })
+    .from(sessionItems)
+    .innerJoin(sessions, eq(sessionItems.sessionId, sessions.id))
+    .where(
+      and(
+        eq(sessions.taskId, taskId),
+        eq(sessions.status, "COMMITTED"),
+        eq(sessionItems.serialId, serialId),
+        eq(sessionItems.scanStatus, "OK")
+      )
+    )
+    .limit(1);
+  return rows.length > 0;
 }

@@ -216,6 +216,8 @@ export type ReturnWithSessions = {
   dispatchedAt: Date | null;
   closedAt: Date | null;
   sessions: ReturnSessionRow[];
+  /** Unique serial count per task (not sum of scan + verify; same serial scanned then verified = 1). */
+  uniqueSerialCountByTaskId: Record<string, number>;
   totalSerials: number;
   verifiedCount: number;
   serials: { serialId: string; sku: string | null; taskId: string; taskName: string | null; returnable: string; nonReturnReason: string | null }[];
@@ -266,6 +268,7 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
       dispatchedAt: r.dispatchedAt ?? null,
       closedAt: r.closedAt ?? null,
       sessions: [],
+      uniqueSerialCountByTaskId: {},
       totalSerials: 0,
       verifiedCount: 0,
       serials: [],
@@ -280,9 +283,24 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
 
   const countBySession = new Map<string, number>();
   const serialIds = new Set<string>();
+  const taskIdBySession = new Map(sessionRows.map((s) => [s.sessionId, s.taskId]));
+  const uniqueSerialsByTaskId = new Map<string, Set<string>>();
   for (const row of itemRows) {
     countBySession.set(row.sessionId, (countBySession.get(row.sessionId) ?? 0) + 1);
     serialIds.add(row.serialId);
+    const taskId = taskIdBySession.get(row.sessionId);
+    if (taskId) {
+      let set = uniqueSerialsByTaskId.get(taskId);
+      if (!set) {
+        set = new Set<string>();
+        uniqueSerialsByTaskId.set(taskId, set);
+      }
+      set.add(row.serialId);
+    }
+  }
+  const uniqueSerialCountByTaskId: Record<string, number> = {};
+  for (const [tid, set] of uniqueSerialsByTaskId) {
+    uniqueSerialCountByTaskId[tid] = set.size;
   }
 
   const sessionsList: ReturnSessionRow[] = sessionRows.map((s) => ({
@@ -298,9 +316,6 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     startedByName: formatDisplayName(s.firstName, s.lastName),
   }));
 
-  const totalSerials = sessionsList.reduce((n, s) => n + s.serialCount, 0);
-
-  const taskIdBySession = new Map(sessionRows.map((s) => [s.sessionId, s.taskId]));
   const taskNameByTaskId = new Map(sessionRows.map((s) => [s.taskId, s.taskName]));
   const pairs = itemRows
     .map((i) => ({ taskId: taskIdBySession.get(i.sessionId), serialId: i.serialId }))
@@ -323,7 +338,7 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
       .select({ taskId: taskSerials.taskId, serialId: taskSerials.serialId })
       .from(taskSerials)
       .where(or(...conditions));
-    verifiedCount = returned.length;
+    verifiedCount = new Set(returned.map((r) => r.serialId)).size;
     const tsRows = await db
       .select({ taskId: taskSerials.taskId, serialId: taskSerials.serialId, returnable: taskSerials.returnable, nonReturnReason: taskSerials.nonReturnReason })
       .from(taskSerials)
@@ -351,12 +366,41 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     serialsWithMeta = serialsWithMeta.map((row) => ({ ...row, sku: skuBySerial.get(row.serialId) ?? null }));
   }
 
-  const deduped = new Map<string, typeof serialsWithMeta[number]>();
+  // Deduplicate by serialId only: one row per physical serial in the return.
+  // If a serial appears in multiple tasks (data issue), keep one row and indicate "Multiple tasks".
+  const bySerialId = new Map<string, { serialId: string; sku: string | null; taskId: string; taskName: string | null; returnable: string; nonReturnReason: string | null; taskIds: string[]; taskNames: string[] }>();
   for (const s of serialsWithMeta) {
-    const key = `${s.serialId}-${s.taskId}`;
-    if (!deduped.has(key)) deduped.set(key, s);
+    const existing = bySerialId.get(s.serialId);
+    if (!existing) {
+      bySerialId.set(s.serialId, {
+        serialId: s.serialId,
+        sku: s.sku,
+        taskId: s.taskId,
+        taskName: s.taskName,
+        returnable: s.returnable,
+        nonReturnReason: s.nonReturnReason,
+        taskIds: [s.taskId],
+        taskNames: s.taskName ? [s.taskName] : [],
+      });
+    } else {
+      if (!existing.taskIds.includes(s.taskId)) {
+        existing.taskIds.push(s.taskId);
+        if (s.taskName && !existing.taskNames.includes(s.taskName)) existing.taskNames.push(s.taskName);
+      }
+      if (s.returnable === "0") {
+        existing.returnable = "0";
+        existing.nonReturnReason = s.nonReturnReason ?? existing.nonReturnReason;
+      }
+    }
   }
-  const uniqueSerials = Array.from(deduped.values());
+  const uniqueSerials = Array.from(bySerialId.values()).map((s) => ({
+    serialId: s.serialId,
+    sku: s.sku,
+    taskId: s.taskId,
+    taskName: s.taskNames.length > 1 ? "Multiple tasks" : (s.taskNames[0] ?? s.taskName ?? null),
+    returnable: s.returnable,
+    nonReturnReason: s.nonReturnReason,
+  }));
 
   return {
     id: r.id,
@@ -368,6 +412,7 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     dispatchedAt: r.dispatchedAt ?? null,
     closedAt: r.closedAt ?? null,
     sessions: sessionsList,
+    uniqueSerialCountByTaskId,
     totalSerials: uniqueSerials.length,
     verifiedCount,
     serials: uniqueSerials,
