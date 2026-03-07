@@ -19,9 +19,9 @@ function isConnectError(e: unknown): boolean {
   return false;
 }
 
-export async function signIn(formData: { email: string; password: string }) {
+export async function signIn(formData: { email: string; password: string; keepSignedIn?: boolean }) {
   try {
-    const supabase = await createClient();
+    const supabase = await createClient({ persistSession: formData.keepSignedIn !== false });
     const { error } = await supabase.auth.signInWithPassword({
       email: formData.email,
       password: formData.password,
@@ -107,6 +107,62 @@ export async function adminListUsers() {
       role: roleMap.get(u.id) ?? "SHOOT_USER",
       createdAt: u.created_at,
     }));
+
+    return { error: null, users };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Something went wrong.", users: [] };
+  }
+}
+
+export type AdminUserWithDetails = {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string | null;
+  lastName: string | null;
+  createdAt: string;
+  lastSignInAt: string | null;
+  teamNames: string[];
+};
+
+/** List users with display name, last sign-in, and team names for admin User Management table. */
+export async function adminListUsersWithDetails(): Promise<{
+  error: string | null;
+  users: AdminUserWithDetails[];
+}> {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") {
+    return { error: "Forbidden", users: [] };
+  }
+
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 } as { perPage?: number });
+    if (error) return { error: error.message, users: [] };
+
+    const db = getDb();
+    const { profiles } = await import("@/lib/db/schema");
+    const profileRows = await db.select().from(profiles);
+    const profileMap = new Map(profileRows.map((p) => [p.id, p]));
+
+    const { getTeamNamesByUserIds } = await import("@/lib/repositories/team-repository");
+    const userIds = data.users.map((u) => u.id);
+    const teamNamesByUser = await getTeamNamesByUserIds(db, userIds);
+
+    const users: AdminUserWithDetails[] = data.users.map((u) => {
+      const profile = profileMap.get(u.id);
+      const authUser = u as { last_sign_in_at?: string | null };
+      return {
+        id: u.id,
+        email: u.email ?? "",
+        role: profile?.role ?? "SHOOT_USER",
+        firstName: profile?.firstName ?? null,
+        lastName: profile?.lastName ?? null,
+        createdAt: typeof u.created_at === "string" ? u.created_at : (u.created_at as Date)?.toISOString?.() ?? "",
+        lastSignInAt: authUser.last_sign_in_at ?? null,
+        teamNames: teamNamesByUser[u.id] ?? [],
+      };
+    });
 
     return { error: null, users };
   } catch (e) {

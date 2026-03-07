@@ -62,7 +62,7 @@ export function ReturnDetailCsvDownload({
       type="button"
       onClick={handleDownload}
       disabled={pending}
-      className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+      className="btn btn-secondary"
     >
       {pending ? (
         <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

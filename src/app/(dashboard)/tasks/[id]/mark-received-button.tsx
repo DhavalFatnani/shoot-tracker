@@ -12,14 +12,18 @@ export function MarkReceivedButton({ taskId }: { taskId: string }) {
 
   const handleClick = () => {
     startTransition(async () => {
-      const formData = new FormData();
-      formData.set("taskId", taskId);
-      const result = await markReceivedTask(formData);
-      if (result.success) {
-        toast("Task marked as received", { variant: "success" });
-        router.refresh();
-      } else {
-        toast(result.error ?? "Failed to mark received", { variant: "error" });
+      try {
+        const formData = new FormData();
+        formData.set("taskId", taskId);
+        const result = await markReceivedTask(formData);
+        if (result.success) {
+          toast("Task marked as received", { variant: "success" });
+          router.refresh();
+        } else {
+          toast(result.error ?? "Failed to mark received", { variant: "error" });
+        }
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Something went wrong.", { variant: "error" });
       }
     });
   };
@@ -28,7 +32,7 @@ export function MarkReceivedButton({ taskId }: { taskId: string }) {
     <button
       onClick={handleClick}
       disabled={pending}
-      className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50"
+      className="btn btn-primary"
     >
       {pending ? (
         <>

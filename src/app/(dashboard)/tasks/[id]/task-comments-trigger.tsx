@@ -8,11 +8,12 @@ type Props = {
   taskId: string;
   initialComments: Comment[];
   currentUserId: string;
+  currentUserDisplayName?: string | null;
 };
 
 const LATEST_COUNT = 3;
 
-export function TaskCommentsTrigger({ taskId, initialComments, currentUserId }: Props) {
+export function TaskCommentsTrigger({ taskId, initialComments, currentUserId, currentUserDisplayName }: Props) {
   const [open, setOpen] = useState(false);
   const [comments, setComments] = useState(initialComments);
 
@@ -27,34 +28,34 @@ export function TaskCommentsTrigger({ taskId, initialComments, currentUserId }: 
 
   return (
     <>
-      <div className="rounded-xl border border-zinc-200/80 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
-        <div className="flex items-center justify-between border-b border-zinc-200/80 px-4 py-3 dark:border-zinc-600">
-          <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Comments ({comments.length})</h3>
+      <div className="rounded-xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800/80">
+        <div className="flex items-center justify-between border-b border-slate-200/80 px-4 py-3 dark:border-slate-600">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Comments ({comments.length})</h3>
         </div>
 
         {comments.length === 0 ? (
           <div className="px-4 py-4">
-            <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">No comments yet.</p>
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400">No comments yet.</p>
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="mt-2 w-full rounded-lg border border-dashed border-zinc-300 py-2 text-sm font-medium text-teal-600 hover:bg-teal-50 dark:border-zinc-600 dark:text-teal-400 dark:hover:bg-zinc-800"
+              className="mt-2 w-full rounded-lg border border-dashed border-slate-300 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:border-slate-600 dark:text-indigo-400 dark:hover:bg-slate-800"
             >
               Add comment
             </button>
           </div>
         ) : (
           <>
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-700">
+            <ul className="divide-y divide-slate-100 dark:divide-slate-700">
               {latestComments.map((c) => (
                 <CommentRow key={c.id} comment={c} currentUserId={currentUserId} />
               ))}
             </ul>
-            <div className="border-t border-zinc-100 px-4 py-2 dark:border-zinc-700">
+            <div className="border-t border-slate-100 px-4 py-2 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="w-full rounded-lg py-2 text-center text-sm font-medium text-teal-600 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-zinc-800"
+                className="w-full rounded-lg py-2 text-center text-sm font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-slate-800"
               >
                 {hasMore ? `View all ${comments.length} comments` : "View all & add comment"}
               </button>
@@ -65,19 +66,19 @@ export function TaskCommentsTrigger({ taskId, initialComments, currentUserId }: 
 
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-zinc-900/50" />
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-slate-900/50" />
           <Dialog.Content
-            className="fixed left-[50%] top-[50%] z-50 flex max-h-[85vh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] flex-col rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+            className="fixed left-[50%] top-[50%] z-50 flex max-h-[85vh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] flex-col rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900"
             aria-describedby={undefined}
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
-              <Dialog.Title className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+              <Dialog.Title className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Comments
               </Dialog.Title>
               <Dialog.Close asChild>
                 <button
                   type="button"
-                  className="rounded-lg p-1.5 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+                  className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-300"
                   aria-label="Close"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -91,6 +92,7 @@ export function TaskCommentsTrigger({ taskId, initialComments, currentUserId }: 
                 taskId={taskId}
                 initialComments={comments}
                 currentUserId={currentUserId}
+                currentUserDisplayName={currentUserDisplayName}
                 inModal
                 onCommentsChange={handleCommentsChange}
               />

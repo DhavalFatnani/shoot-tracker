@@ -178,55 +178,48 @@ export function AdminTeams() {
   const userEmail = (id: string) => users.find((u) => u.id === id)?.email ?? "—";
   const availableToAdd = users.filter((u) => !memberUserIds.includes(u.id));
 
-  const cardClass = "rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80";
-  const inputClass = "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
-  const labelClass = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400";
-  const btnPrimary = "rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60 dark:focus:ring-offset-zinc-800";
-  const btnSecondary = "rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700";
-  const btnDanger = "rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50";
-
   return (
     <div className="space-y-6">
-      <div className={`${cardClass} p-6`}>
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">Create team</h2>
+      <div className="section-card p-6">
+        <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Create team</h2>
         <form onSubmit={handleCreate} className="flex flex-col gap-4 sm:flex-row sm:items-end">
-          <div className="flex-1 min-w-0">
-            <label className={labelClass}>Name</label>
+          <div className="form-group flex-1 min-w-0">
+            <label className="label">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Team name"
               required
-              className={inputClass}
+              className="input"
             />
           </div>
-          <div className="w-32">
-            <label className={labelClass}>Type</label>
-            <select value={type} onChange={(e) => setType(e.target.value as TeamType)} className={inputClass}>
+          <div className="form-group w-32">
+            <label className="label">Type</label>
+            <select value={type} onChange={(e) => setType(e.target.value as TeamType)} className="input">
               {TEAM_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
           </div>
-          <div className="w-48">
-            <label className={labelClass}>Warehouse (optional)</label>
-            <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className={inputClass}>
+          <div className="form-group w-48">
+            <label className="label">Warehouse (optional)</label>
+            <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className="input">
               <option value="">—</option>
               {warehouses.map((w) => (
                 <option key={w.id} value={w.id}>{w.name}</option>
               ))}
             </select>
           </div>
-          <button type="submit" disabled={creating} className={btnPrimary}>
+          <button type="submit" disabled={creating} className="btn btn-primary">
             {creating ? "Creating…" : "Create team"}
           </button>
         </form>
       </div>
 
-      <div className={`overflow-hidden ${cardClass}`}>
-        <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Teams ({teams.length})</h2>
+      <div className="section-card overflow-hidden">
+        <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-600">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Teams ({teams.length})</h2>
         </div>
         {error && (
           <div className="mx-5 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
@@ -234,71 +227,72 @@ export function AdminTeams() {
           </div>
         )}
         {loading ? (
-          <p className="px-5 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
+          <p className="px-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading…</p>
         ) : teams.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">No teams yet. Create one above.</p>
+          <p className="px-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No teams yet. Create one above.</p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Name</th>
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Type</th>
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Warehouse</th>
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
+          <div className="table-wrapper">
+            <table className="table table-sticky table-row-hover w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="table-th">Name</th>
+                  <th className="table-th">Type</th>
+                  <th className="table-th">Warehouse</th>
+                  <th className="table-th">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
               {teams.map((t) => (
-                <tr key={t.id} className="transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50">
-                  <td className="px-5 py-3.5">
+                <tr key={t.id}>
+                  <td className="table-td">
                     {editingId === t.id ? (
-                      <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="max-w-xs rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                      <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="max-w-xs rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" />
                     ) : (
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{t.name}</span>
+                      <span className="font-medium text-slate-900 dark:text-slate-100">{t.name}</span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="table-td">
                     {editingId === t.id ? (
-                      <select value={editType} onChange={(e) => setEditType(e.target.value as TeamType)} className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100">
+                      <select value={editType} onChange={(e) => setEditType(e.target.value as TeamType)} className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
                         {TEAM_TYPES.map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                       </select>
                     ) : (
-                      <span className="text-zinc-700 dark:text-zinc-300">{t.type}</span>
+                      <span className="text-slate-700 dark:text-slate-300">{t.type}</span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="table-td">
                     {editingId === t.id ? (
-                      <select value={editWarehouseId} onChange={(e) => setEditWarehouseId(e.target.value)} className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100">
+                      <select value={editWarehouseId} onChange={(e) => setEditWarehouseId(e.target.value)} className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
                         <option value="">—</option>
                         {warehouses.map((w) => (
                           <option key={w.id} value={w.id}>{w.name}</option>
                         ))}
                       </select>
                     ) : (
-                      <span className="text-zinc-500 dark:text-zinc-400">{warehouseName(t.warehouseId)}</span>
+                      <span className="text-slate-500 dark:text-slate-400">{warehouseName(t.warehouseId)}</span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="table-td">
                     {editingId === t.id ? (
                       <div className="flex gap-2">
-                        <button type="button" onClick={handleSaveEdit} disabled={saving} className={btnPrimary}>
+                        <button type="button" onClick={handleSaveEdit} disabled={saving} className="btn btn-primary">
                           Save
                         </button>
-                        <button type="button" onClick={() => setEditingId(null)} className={btnSecondary}>
+                        <button type="button" onClick={() => setEditingId(null)} className="btn btn-secondary text-xs">
                           Cancel
                         </button>
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => openMembers(t.id)} className={btnSecondary}>
+                        <button type="button" onClick={() => openMembers(t.id)} className="btn btn-secondary text-xs">
                           Members
                         </button>
-                        <button type="button" onClick={() => startEdit(t)} className={btnSecondary}>
+                        <button type="button" onClick={() => startEdit(t)} className="btn btn-secondary text-xs">
                           Edit
                         </button>
-                        <button type="button" onClick={() => setDeleteTarget({ id: t.id, name: t.name })} className={btnDanger}>
+                        <button type="button" onClick={() => setDeleteTarget({ id: t.id, name: t.name })} className="btn btn-danger text-xs">
                           Delete
                         </button>
                       </div>
@@ -306,21 +300,22 @@ export function AdminTeams() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {memberTeamId && (
         <>
-          <div className="fixed inset-0 z-40 bg-zinc-900/50" aria-hidden onClick={() => setMemberTeamId(null)} />
-          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="fixed inset-0 z-40 bg-slate-900/50" aria-hidden onClick={() => setMemberTeamId(null)} />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Team members</h3>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Team members</h3>
               <button
                 type="button"
                 onClick={() => setMemberTeamId(null)}
-                className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                 aria-label="Close"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,13 +323,13 @@ export function AdminTeams() {
                 </svg>
               </button>
             </div>
-            <ul className="mb-4 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-600">
+            <ul className="mb-4 max-h-48 space-y-2 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-600">
               {memberUserIds.length === 0 ? (
-                <li className="px-3 py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">No members yet.</li>
+                <li className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400">No members yet.</li>
               ) : (
                 memberUserIds.map((userId) => (
-                  <li key={userId} className="flex items-center justify-between border-b border-zinc-100 px-3 py-2 last:border-0 dark:border-zinc-700">
-                    <span className="text-sm text-zinc-900 dark:text-zinc-100">{userEmail(userId)}</span>
+                  <li key={userId} className="flex items-center justify-between border-b border-slate-100 px-3 py-2 last:border-0 dark:border-slate-700">
+                    <span className="text-sm text-slate-900 dark:text-slate-100">{userEmail(userId)}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveMember(userId)}
@@ -350,7 +345,7 @@ export function AdminTeams() {
               <select
                 value={addUserId}
                 onChange={(e) => setAddUserId(e.target.value)}
-                className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="">Add user…</option>
                 {availableToAdd.map((u) => (
@@ -361,7 +356,7 @@ export function AdminTeams() {
                 type="button"
                 onClick={handleAddMember}
                 disabled={!addUserId || addingMember}
-                className={btnPrimary}
+                className="btn btn-primary"
               >
                 Add
               </button>

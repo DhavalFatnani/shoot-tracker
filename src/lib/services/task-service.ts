@@ -139,20 +139,22 @@ export async function closeTask(taskId: string, userId: string, userRole: Role, 
   }
 
   const db = getDb();
-  const task = await taskRepo.taskById(db, taskId);
+  const [task, countsMap, openDisputes] = await Promise.all([
+    taskRepo.taskById(db, taskId),
+    taskSerialRepo.taskSerialCountsByStatus(db, taskId),
+    disputeRepo.openDisputesByTaskId(db, taskId),
+  ]);
   if (!task) throw new NotFoundError("Task", taskId);
   if (task.status === "CLOSED") {
     throw new InvariantViolationError("Task is already closed.");
   }
 
-  const countsMap = await taskSerialRepo.taskSerialCountsByStatus(db, taskId);
   const counts = computeTaskSerialCounts(countsMap);
   if (!isTaskBalanceSatisfied(counts)) {
     const msg = getBalanceViolation(counts);
     throw new InvariantViolationError(`Task balance not satisfied: ${msg}`);
   }
 
-  const openDisputes = await disputeRepo.openDisputesByTaskId(db, taskId);
   if (openDisputes.length > 0) {
     throw new InvariantViolationError(`Cannot close task: ${openDisputes.length} open dispute(s)`);
   }
@@ -213,8 +215,15 @@ export async function listTasks(
     q: options.q,
   });
   const taskIds = tasks.map((t) => t.id);
-  const receivedTaskIds = await taskSerialRepo.taskIdsWithReceivedSerials(db, taskIds);
-  return { tasks, receivedTaskIds };
+  const [receivedTaskIds, unitCounts] = await Promise.all([
+    taskSerialRepo.taskIdsWithReceivedSerials(db, taskIds),
+    taskSerialRepo.countSerialsByTaskIds(db, taskIds),
+  ]);
+  const tasksWithUnits = tasks.map((t) => ({
+    ...t,
+    unitCount: unitCounts.get(t.id) ?? 0,
+  }));
+  return { tasks: tasksWithUnits, receivedTaskIds };
 }
 
 /** Tasks that contain this serial and are visible to the user (for serial timeline "Raise dispute"). */
@@ -459,9 +468,7 @@ export async function bulkDispatch(
 
     const transitLocation = getLocationForTaskSerialStatus("IN_TRANSIT");
     if (transitLocation) {
-      for (const id of serialIds) {
-        await serialStateRepo.upsertLocation(tx, id, transitLocation);
-      }
+      await serialStateRepo.upsertLocations(tx, serialIds, transitLocation);
     }
 
     await eventRepo.insertEvents(
@@ -660,10 +667,7 @@ export async function adminDeleteTask(
     await tx.delete(disputes).where(eq(disputes.taskId, taskId));
     await tx.delete(tasks).where(eq(tasks.id, taskId));
 
-    // Revert inventory: put every serial from this task back at warehouse
-    for (const serialId of serialIds) {
-      await serialStateRepo.upsertLocation(tx, serialId, "WH_");
-    }
+    await serialStateRepo.upsertLocations(tx, serialIds, "WH_");
   });
 
   return { success: true };

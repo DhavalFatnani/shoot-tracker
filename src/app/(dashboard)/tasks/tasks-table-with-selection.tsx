@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { LinkWithStopPropagation } from "@/components/ui/link-with-stop-propagation";
 import { getTaskStatusClass, getTaskStatusDisplayLabel } from "@/lib/status-colors";
 import { formatTaskSerial } from "@/lib/format-serials";
-import { formatDateTimeIST } from "@/lib/format-date";
+import { formatRelativeTime } from "@/lib/format-date";
 import { buildCsv, downloadCsv } from "@/lib/csv";
 import { exportMultiTaskData } from "@/app/actions/task-actions";
 import { TasksEmptyState } from "@/components/empty-state";
 
-type TaskRow = { id: string; name: string | null; serial: number; shootReason: string | null; status: string; createdAt: Date | string };
+type TaskRow = { id: string; name: string | null; serial: number; shootReason: string | null; status: string; createdAt: Date | string; unitCount?: number };
 
 export function TasksTableWithSelection({
   tasks,
@@ -64,15 +64,15 @@ export function TasksTableWithSelection({
   return (
     <>
       {someSelected && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-2 dark:border-zinc-600 dark:bg-zinc-800/50">
-          <span className="text-sm text-zinc-600 dark:text-zinc-300">
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
             {selectedIds.size} task{selectedIds.size !== 1 ? "s" : ""} selected
           </span>
           <button
             type="button"
             onClick={handleMultiTaskDownload}
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="btn-secondary disabled:opacity-50"
           >
             {pending ? (
               <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -89,16 +89,16 @@ export function TasksTableWithSelection({
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           >
             Clear selection
           </button>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
+      <div className="table-wrapper">
+        <table className="table table-sticky table-row-hover">
+          <thead>
             <tr>
               <th className="w-10 px-3 py-3.5">
                 <input
@@ -106,20 +106,21 @@ export function TasksTableWithSelection({
                   checked={allSelected}
                   onChange={toggleSelectAll}
                   aria-label="Select all tasks on this page"
-                  className="h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-700"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                 />
               </th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Task</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Reason</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Status</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Created</th>
-              <th className="px-5 py-3.5"></th>
+              <th className="table-th">TASK ID</th>
+              <th className="table-th">NAME</th>
+              <th className="table-th">UNITS</th>
+              <th className="table-th">STATUS</th>
+              <th className="table-th">CREATED</th>
+              <th className="table-th px-5 py-3.5 text-right">ACTIONS</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
+          <tbody>
             {tasks.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-8">
+                <td colSpan={7} className="px-5 py-8">
                   <TasksEmptyState hasFilters={hasFilters} />
                 </td>
               </tr>
@@ -136,7 +137,7 @@ export function TasksTableWithSelection({
                     router.push(`/tasks/${t.id}`);
                   }
                 }}
-                className="cursor-pointer transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50"
+                className="cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
               >
                 <td className="w-10 px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
                   <input
@@ -144,36 +145,34 @@ export function TasksTableWithSelection({
                     checked={selectedIds.has(t.id)}
                     onChange={() => toggleSelection(t.id)}
                     aria-label={`Select task ${formatTaskSerial(t.serial)}`}
-                    className="h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-700"
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                   />
                 </td>
-                <td className="px-5 py-3.5">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{t.name ?? `Task ${formatTaskSerial(t.serial)}`}</p>
-                  <p className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">{formatTaskSerial(t.serial)}</p>
+                <td className="table-td">
+                  <span className="font-semibold text-indigo-600 dark:text-indigo-400">#{formatTaskSerial(t.serial)}</span>
                 </td>
-                <td className="px-5 py-3.5">
-                  {t.shootReason ? (
-                    <span className="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700">
-                      {t.shootReason === "INHOUSE_SHOOT" ? "Inhouse" : t.shootReason === "AGENCY_SHOOT" ? "Agency" : t.shootReason === "INFLUENCER_FITS" ? "Influencer" : t.shootReason}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-zinc-400">—</span>
-                  )}
+                <td className="table-td">
+                  <p className="font-medium text-slate-900 dark:text-slate-100">{t.name ?? `Task ${formatTaskSerial(t.serial)}`}</p>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    {t.shootReason === "INHOUSE_SHOOT" ? "Inhouse" : t.shootReason === "AGENCY_SHOOT" ? "Agency" : t.shootReason === "INFLUENCER_FITS" ? "Influencer" : t.shootReason ?? "—"}
+                  </p>
                 </td>
-                <td className="px-5 py-3.5">
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getTaskStatusClass(t.status === "PICKING" && receivedSet.has(t.id) ? "RECEIVING" : t.status)}`}>
+                <td className="table-td tabular-nums text-slate-600 dark:text-slate-300">{t.unitCount ?? "—"}</td>
+                <td className="table-td">
+                  <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getTaskStatusClass(t.status === "PICKING" && receivedSet.has(t.id) ? "RECEIVING" : t.status)}`}>
                     {getTaskStatusDisplayLabel(t.status, false, receivedSet.has(t.id))}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">{formatDateTimeIST(t.createdAt)}</td>
+                <td className="table-td text-slate-600 dark:text-slate-300">{formatRelativeTime(t.createdAt)}</td>
                 <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                   <LinkWithStopPropagation
                     href={`/tasks/${t.id}`}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 transition duration-200 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+                    aria-label={`View task ${formatTaskSerial(t.serial)}`}
                   >
-                    View
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.25 5.5a.75.75 0 00-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 00.75-.75v-4a.75.75 0 011.5 0v4A2.25 2.25 0 0112.75 17h-8.5A2.25 2.25 0 012 14.75v-8.5A2.25 2.25 0 014.25 4h5a.75.75 0 010 1.5h-5z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M6.194 12.753a.75.75 0 001.06.053L16.5 4.44v2.81a.75.75 0 001.5 0v-4.5a.75.75 0 00-.75-.75h-4.5a.75.75 0 000 1.5h2.553l-9.056 8.194a.75.75 0 00-.053 1.06z" clipRule="evenodd" />
                     </svg>
                   </LinkWithStopPropagation>
                 </td>

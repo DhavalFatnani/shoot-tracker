@@ -1,8 +1,39 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { serialCurrentState, serialRegistry, taskSerials, tasks } from "@/lib/db/schema";
 import type { Role } from "@/lib/validations";
 import { ForbiddenError } from "@/lib/errors";
+
+/** Lightweight count for dashboard KPIs (avoids fetching full buffer list). */
+export async function countBufferForKpis(options: {
+  role: Role;
+  shootTeamIds: string[];
+  opsWarehouseIds: string[];
+}): Promise<number> {
+  const db = getDb();
+  if (options.role === "OPS_USER") return 0;
+
+  if (options.role === "SHOOT_USER" && options.shootTeamIds.length > 0) {
+    const rows = await db
+      .select({ count: sql<number>`count(distinct ${serialCurrentState.serialId})::int` })
+      .from(serialCurrentState)
+      .innerJoin(taskSerials, eq(serialCurrentState.serialId, taskSerials.serialId))
+      .innerJoin(tasks, eq(taskSerials.taskId, tasks.id))
+      .where(
+        and(
+          eq(serialCurrentState.currentLocation, "SHOOT_BUFFER"),
+          inArray(tasks.shootTeamId, options.shootTeamIds)
+        )
+      );
+    return rows[0]?.count ?? 0;
+  }
+
+  const rows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(serialCurrentState)
+    .where(eq(serialCurrentState.currentLocation, "SHOOT_BUFFER"));
+  return rows[0]?.count ?? 0;
+}
 
 type BufferAgingOptions = {
   minDaysInBuffer?: number;

@@ -4,17 +4,17 @@
  */
 
 export const TASK_STATUS_COLORS: Record<string, string> = {
-  OPEN: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
-  PICKING_PENDING: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
-  PICKING: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
-  IN_TRANSIT: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200",
-  ACTIVE: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
-  RETURN_PENDING: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-200",
-  COLLECTED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
-  RECEIVING: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
-  RETURNING: "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-200",
-  VERIFYING: "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-200",
-  CLOSED: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
+  OPEN: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  PICKING_PENDING: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  PICKING: "bg-amber-50 text-amber-800 dark:bg-amber-900/50 dark:text-amber-100",
+  IN_TRANSIT: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  ACTIVE: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200",
+  RETURN_PENDING: "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-100",
+  COLLECTED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200",
+  RECEIVING: "bg-amber-50 text-amber-800 dark:bg-amber-900/50 dark:text-amber-100",
+  RETURNING: "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-100",
+  VERIFYING: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  CLOSED: "bg-slate-100 text-slate-700 dark:bg-slate-600 dark:text-slate-200",
 };
 
 /** User-facing labels for task statuses (filters, badges, lists) */
@@ -45,25 +45,24 @@ export function getTaskStatusDisplayLabel(status: string, verifyScanClosed?: boo
 }
 
 export const TASK_SERIAL_STATUS_COLORS: Record<string, string> = {
-  REQUESTED: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
-  PICKED: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200",
-  PACKED: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200",
-  DISPATCHED: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200",
-  IN_TRANSIT: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200",
-  RECEIVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
-  SOLD: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
-  NOT_FOUND: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-200",
-  QC_FAIL: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200",
-  RETURNED: "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-200",
-  BUFFERED: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
+  REQUESTED: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  PICKED: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  PACKED: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  DISPATCHED: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  IN_TRANSIT: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  RECEIVED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200",
+  SOLD: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200",
+  NOT_FOUND: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-200",
+  QC_FAIL: "bg-rose-50 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200",
+  RETURNED: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  BUFFERED: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
   RETURN_CREATED: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
-  RETURN_IN_TRANSIT: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
+  RETURN_IN_TRANSIT: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
 };
 
 export const DISPUTE_STATUS_COLORS: Record<string, string> = {
-  OPEN: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
-  RESOLVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
-  REJECTED: "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
+  OPEN: "bg-amber-50 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
+  RESOLVED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200",
 };
 
 /** Single map for task + serial statuses (task detail uses both in one object in some places) */
@@ -75,7 +74,6 @@ export const STATUS_COLORS: Record<string, string> = {
 export const DISPUTE_STATUS_LABELS: Record<string, string> = {
   OPEN: "Open",
   RESOLVED: "Resolved",
-  REJECTED: "Rejected",
 };
 
 const DEFAULT_STATUS_CLASS = "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300";

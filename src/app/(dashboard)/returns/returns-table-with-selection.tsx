@@ -74,15 +74,11 @@ export function ReturnsTableWithSelection({
   return (
     <>
       {someSelected && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-4 py-2 dark:border-zinc-600 dark:bg-zinc-800/50">
-          <span className="text-sm text-zinc-600 dark:text-zinc-300">
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
             {selectedIds.size} return{selectedIds.size !== 1 ? "s" : ""} selected
           </span>
-          <button
-            type="button"
-            onClick={handleSelectedDownload}
-            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          >
+          <button type="button" onClick={handleSelectedDownload} className="btn-secondary">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -91,16 +87,16 @@ export function ReturnsTableWithSelection({
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
-            className="text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="text-sm font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           >
             Clear selection
           </button>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
+      <div className="table-wrapper">
+        <table className="table table-sticky table-row-hover">
+          <thead>
             <tr>
               <th className="w-10 px-3 py-3.5">
                 <input
@@ -108,19 +104,19 @@ export function ReturnsTableWithSelection({
                   checked={allSelected}
                   onChange={toggleSelectAll}
                   aria-label="Select all returns on this page"
-                  className="h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-700"
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                 />
               </th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Return</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Name</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Status</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Units</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Tasks</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Created</th>
+              <th className="table-th">Return</th>
+              <th className="table-th">Name</th>
+              <th className="table-th">Status</th>
+              <th className="table-th">Units</th>
+              <th className="table-th">Tasks</th>
+              <th className="table-th">Created</th>
               <th className="px-5 py-3.5"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
+          <tbody>
             {returnsList.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-5 py-8">
@@ -138,7 +134,7 @@ export function ReturnsTableWithSelection({
                     ? "In transit"
                     : "Return created";
               const statusClass = r.closedAt
-                ? "bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200"
+                ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200"
                 : allVerified
                   ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200"
                   : r.dispatchedAt
@@ -156,7 +152,7 @@ export function ReturnsTableWithSelection({
                       router.push(`/returns/${r.id}`);
                     }
                   }}
-                  className="cursor-pointer transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50"
+                  className="cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
                 >
                   <td className="w-10 px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
                     <input
@@ -164,29 +160,29 @@ export function ReturnsTableWithSelection({
                       checked={selectedIds.has(r.id)}
                       onChange={() => toggleSelection(r.id)}
                       aria-label={`Select return ${formatReturnSerial(r.serial)}`}
-                      className="h-4 w-4 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-700"
+                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
                     />
                   </td>
-                  <td className="px-5 py-3.5">
-                    <span className="text-zinc-900 dark:text-zinc-100">{formatReturnSerial(r.serial)}</span>
+                  <td className="table-td">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{formatReturnSerial(r.serial)}</span>
                   </td>
-                  <td className="px-5 py-3.5 text-zinc-700 dark:text-zinc-300">
+                  <td className="table-td text-slate-700 dark:text-slate-300">
                     {r.name ?? formatReturnSerial(r.serial)}
                   </td>
-                  <td className="px-5 py-3.5">
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClass}`}>
+                  <td className="table-td">
+                    <span className={`badge ${statusClass}`}>
                       {status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300">{r.totalSerials}</td>
-                  <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300">{r.taskCount}</td>
-                  <td className="px-5 py-3.5 text-zinc-500 dark:text-zinc-400">
+                  <td className="table-td">{r.totalSerials}</td>
+                  <td className="table-td">{r.taskCount}</td>
+                  <td className="table-td">
                     {formatDateTimeIST(r.createdAt)}
                   </td>
                   <td className="px-5 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
                     <LinkWithStopPropagation
                       href={`/returns/${r.id}`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-teal-600 transition duration-200 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
+                      className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 transition duration-200 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                     >
                       View
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">

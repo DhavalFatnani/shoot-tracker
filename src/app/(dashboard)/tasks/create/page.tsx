@@ -11,10 +11,10 @@ export default async function CreateRequestPage() {
 
   if (session.role === "OPS_USER") {
     return (
-      <div className="space-y-6">
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
-          <h2 className="text-lg font-semibold text-amber-800">Access restricted</h2>
-          <p className="mt-1 text-sm text-amber-700">
+      <div className="page-container space-y-6">
+        <div className="section-card border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 p-6">
+          <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200">Access restricted</h2>
+          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
             Only shoot team members and admins can create requests. OPS users can view and act on existing tasks.
           </p>
         </div>
@@ -36,18 +36,18 @@ export default async function CreateRequestPage() {
     : null;
 
   return (
-    <div className="space-y-6">
-      <nav className="flex items-center gap-2 text-sm text-slate-500">
-        <Link href="/tasks" className="transition-colors hover:text-indigo-600">Tasks</Link>
+    <div className="page-container space-y-6">
+      <nav className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <Link href="/tasks" className="transition-colors hover:text-indigo-600 dark:hover:text-indigo-400">Tasks</Link>
         <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
         </svg>
-        <span className="font-medium text-slate-900">Create request</span>
+        <span className="font-medium text-slate-900 dark:text-slate-100">Create request</span>
       </nav>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create request</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+      <div className="page-header">
+        <h1 className="page-title">Create request</h1>
+        <p className="page-subtitle max-w-2xl">
           Paste or upload CSV (Clothing, Size, Bin Location, SKU Code) or JSON. Serial number is read from Bin Location (e.g. SN: 0000043569). SKU ↔ Serial mapping is shown everywhere.
         </p>
       </div>

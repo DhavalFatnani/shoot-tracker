@@ -7,3 +7,5 @@ node_modules
 /test-results/
 .next/server/app-paths-manifest.json
 .next/server/app-paths-manifest.json
+
+.superdesign/

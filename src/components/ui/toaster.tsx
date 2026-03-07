@@ -23,9 +23,9 @@ export function useToast() {
 }
 
 const variantStyles: Record<string, string> = {
-  success: "border-teal-200 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-900/30 dark:text-teal-100",
+  success: "border-indigo-200 bg-indigo-50 text-indigo-900 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-100",
   error: "border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-900/30 dark:text-red-100",
-  default: "border-zinc-200 bg-white text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100",
+  default: "border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100",
 };
 
 export function Toaster({ children }: { children: React.ReactNode }) {
@@ -62,7 +62,7 @@ export function Toaster({ children }: { children: React.ReactNode }) {
             onOpenChange={(open) => {
               if (!open) removeToast(t.id);
             }}
-            className={`rounded-lg border px-4 py-3 shadow-lg ${variantStyles[t.variant]}`}
+            className={`rounded-xl border px-4 py-3 shadow-lg ${variantStyles[t.variant]}`}
           >
             {t.title && (
               <ToastPrimitive.Title className="text-sm font-semibold">

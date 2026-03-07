@@ -25,15 +25,19 @@ export function ProfileAccountForm({
     e.preventDefault();
     setMessage(null);
     startTransition(async () => {
-      const result = await updateProfile({
-        firstName: firstName.trim() || null,
-        lastName: lastName.trim() || null,
-      });
-      if (result.error) {
-        setMessage({ type: "error", text: result.error });
-      } else {
-        setMessage({ type: "success", text: "Profile updated." });
-        router.refresh();
+      try {
+        const result = await updateProfile({
+          firstName: firstName.trim() || null,
+          lastName: lastName.trim() || null,
+        });
+        if (result.error) {
+          setMessage({ type: "error", text: result.error });
+        } else {
+          setMessage({ type: "success", text: "Profile updated." });
+          router.refresh();
+        }
+      } catch (e) {
+        setMessage({ type: "error", text: e instanceof Error ? e.message : "Something went wrong." });
       }
     });
   }
@@ -41,23 +45,23 @@ export function ProfileAccountForm({
   const initial = (firstName.trim() || lastName.trim() || email || "?").charAt(0).toUpperCase();
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-      <div className="border-b border-zinc-100 px-5 py-4 dark:border-zinc-600">
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Account</h2>
+    <div className="section-card overflow-hidden">
+      <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-600">
+        <h2 className="font-display text-sm font-semibold text-slate-900 dark:text-slate-100">Account</h2>
       </div>
       <div className="p-5">
         <div className="flex items-center gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xl font-semibold text-teal-700 dark:bg-teal-900/50 dark:text-teal-200">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xl font-semibold text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200">
             {initial}
           </div>
           <div>
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">{email ?? "—"}</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100">{email ?? "—"}</p>
           </div>
         </div>
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="profile-first-name" className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+              <label htmlFor="profile-first-name" className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 First name
               </label>
               <input
@@ -67,11 +71,11 @@ export function ProfileAccountForm({
                 onChange={(e) => setFirstName(e.target.value)}
                 maxLength={128}
                 placeholder="First name"
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
               />
             </div>
             <div>
-              <label htmlFor="profile-last-name" className="mb-1 block text-xs font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+              <label htmlFor="profile-last-name" className="mb-1 block text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Last name
               </label>
               <input
@@ -81,15 +85,15 @@ export function ProfileAccountForm({
                 onChange={(e) => setLastName(e.target.value)}
                 maxLength={128}
                 placeholder="Last name"
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
               />
             </div>
           </div>
           <dl className="grid gap-4 sm:grid-cols-2">
             <div>
-              <dt className="text-xs font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Role</dt>
+              <dt className="text-xs font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Role</dt>
               <dd className="mt-1">
-                <span className="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-sm font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
+                <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-sm font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300">
                   {role.replace("_", " ")}
                 </span>
               </dd>
@@ -103,7 +107,7 @@ export function ProfileAccountForm({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 dark:focus:ring-offset-zinc-900"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:focus:ring-offset-slate-900"
           >
             {pending ? "Saving…" : "Save name"}
           </button>

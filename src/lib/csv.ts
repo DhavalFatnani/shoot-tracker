@@ -28,3 +28,9 @@ export function downloadCsv(csv: string, filename: string) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export {
+  parseInventoryCsv,
+  type ParsedInventoryRow,
+  type ParseInventoryCsvResult,
+} from "./csv/parse-inventory-csv";

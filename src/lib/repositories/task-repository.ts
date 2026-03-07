@@ -8,6 +8,14 @@ export async function taskById(db: Database | Tx, taskId: string) {
   return rows[0] ?? null;
 }
 
+/** Batch fetch tasks by IDs (avoids N+1). Returns rows in same order as ids; missing ids yield null. */
+export async function tasksByIds(db: Database | Tx, ids: string[]) {
+  if (ids.length === 0) return [];
+  const rows = await db.select().from(tasks).where(inArray(tasks.id, ids));
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  return ids.map((id) => byId.get(id) ?? null);
+}
+
 export function listTasks(
   db: Database | Tx,
   options: {

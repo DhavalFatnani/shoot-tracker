@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 type Props = {
   href: string;
@@ -25,7 +26,7 @@ export function ClickableTableRow({ href, children, className }: Props) {
           router.push(href);
         }
       }}
-      className={`cursor-pointer transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50 ${className ?? ""}`}
+      className={cn("cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50", className)}
     >
       {children}
     </tr>

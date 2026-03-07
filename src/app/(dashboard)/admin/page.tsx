@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { AdminOverview } from "./admin-overview";
 
 export default function AdminPage() {
-  redirect("/admin/users");
+  return <AdminOverview />;
 }

@@ -35,14 +35,18 @@ export function AdminTaskActions({ taskId, taskStatus, currentName, currentShoot
     setError(null);
     setSuccess(null);
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      const res = await adminReopenTask(fd);
-      if (res.success) {
-        toast("Task reopened", { variant: "success" });
-        router.refresh();
-      } else {
-        setError(res.error ?? "Failed to reopen");
+      try {
+        const fd = new FormData();
+        fd.set("taskId", taskId);
+        const res = await adminReopenTask(fd);
+        if (res.success) {
+          toast("Task reopened", { variant: "success" });
+          router.refresh();
+        } else {
+          setError(res.error ?? "Failed to reopen");
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
       }
     });
   };
@@ -51,23 +55,27 @@ export function AdminTaskActions({ taskId, taskStatus, currentName, currentShoot
     setError(null);
     setSuccess(null);
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      if (name.trim() && name.trim() !== (currentName ?? "")) fd.set("name", name.trim());
-      if (shootReason !== currentShootReason) fd.set("shootReason", shootReason);
+      try {
+        const fd = new FormData();
+        fd.set("taskId", taskId);
+        if (name.trim() && name.trim() !== (currentName ?? "")) fd.set("name", name.trim());
+        if (shootReason !== currentShootReason) fd.set("shootReason", shootReason);
 
-      if (!fd.has("name") && !fd.has("shootReason")) {
-        setError("No changes to save");
-        return;
-      }
+        if (!fd.has("name") && !fd.has("shootReason")) {
+          setError("No changes to save");
+          return;
+        }
 
-      const res = await adminUpdateTask(fd);
-      if (res.success) {
-        toast("Task updated", { variant: "success" });
-        setEditing(false);
-        router.refresh();
-      } else {
-        setError(res.error ?? "Failed to update");
+        const res = await adminUpdateTask(fd);
+        if (res.success) {
+          toast("Task updated", { variant: "success" });
+          setEditing(false);
+          router.refresh();
+        } else {
+          setError(res.error ?? "Failed to update");
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
       }
     });
   };
@@ -79,17 +87,22 @@ export function AdminTaskActions({ taskId, taskStatus, currentName, currentShoot
 
   const handleConfirmDelete = async () => {
     setDeletePending(true);
-    const fd = new FormData();
-    fd.set("taskId", taskId);
-    const res = await adminDeleteTask(fd);
-    setDeletePending(false);
-    if (res.success) {
-      toast("Task deleted", { variant: "success" });
-      setDeleteDialogOpen(false);
-      router.push("/tasks");
-      router.refresh();
-    } else {
-      toast(res.error ?? "Failed to delete", { variant: "error" });
+    try {
+      const fd = new FormData();
+      fd.set("taskId", taskId);
+      const res = await adminDeleteTask(fd);
+      if (res.success) {
+        toast("Task deleted", { variant: "success" });
+        setDeleteDialogOpen(false);
+        router.push("/tasks");
+        router.refresh();
+      } else {
+        toast(res.error ?? "Failed to delete", { variant: "error" });
+      }
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Something went wrong.", { variant: "error" });
+    } finally {
+      setDeletePending(false);
     }
   };
 

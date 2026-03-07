@@ -31,51 +31,46 @@ export default async function ReturnsPage({
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Returns" }]} />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Returns</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <h1 className="page-title">Returns</h1>
+          <p className="page-subtitle mt-1">
             {returnsList.length === 0 && !hasNext
               ? "Returns created by shoot team. OPS verifies via Return verify scan per task."
               : `${returnsList.length} return${returnsList.length !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {canCreate && (
-          <Link
-            href="/returns/create"
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition duration-200 hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-950"
-          >
+        {canCreate && (
+          <Link href="/returns/create" className="btn btn-primary">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
             Create return
           </Link>
-          )}
-        </div>
+        )}
       </div>
 
       <ReturnsTableWithSelection returns={returnsList} canCreate={canCreate} />
 
       {(page > 1 || hasNext) && (
-        <nav className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-700" aria-label="Pagination">
+        <nav className="flex items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-700" aria-label="Pagination">
           <div>
             {page > 1 ? (
-              <Link href={`/returns?page=${page - 1}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+              <Link href={`/returns?page=${page - 1}`} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                 ← Previous
               </Link>
             ) : (
-              <span className="text-sm text-zinc-400 dark:text-zinc-500">Previous</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">Previous</span>
             )}
           </div>
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">Page {page}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">Page {page}</div>
           <div>
             {hasNext ? (
-              <Link href={`/returns?page=${page + 1}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+              <Link href={`/returns?page=${page + 1}`} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
                 Next →
               </Link>
             ) : (
-              <span className="text-sm text-zinc-400 dark:text-zinc-500">Next</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">Next</span>
             )}
           </div>
         </nav>

@@ -1,8 +1,5 @@
 {
-  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
-  "/(dashboard)/sessions/scan/page": "app/(dashboard)/sessions/scan/page.js",
-  "/(dashboard)/serials/timeline/page": "app/(dashboard)/serials/timeline/page.js",
-  "/(dashboard)/returns/page": "app/(dashboard)/returns/page.js",
-  "/(dashboard)/returns/[id]/page": "app/(dashboard)/returns/[id]/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/icon/route": "app/icon/route.js",
   "/(dashboard)/tasks/page": "app/(dashboard)/tasks/page.js"
 }

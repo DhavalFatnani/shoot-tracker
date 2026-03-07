@@ -14,8 +14,8 @@ export default async function BufferAgingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Buffer aging</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <h1 className="page-title">Buffer aging</h1>
+        <p className="page-subtitle mt-1">
           Serials in SHOOT_BUFFER sorted by days in buffer. Filter, bulk return, or escalate.
         </p>
       </div>

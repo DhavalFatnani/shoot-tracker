@@ -68,17 +68,21 @@ export async function startSession(input: StartSessionInput, userId: string, _us
 
 export async function addScan(input: AddScanInput, userId: string) {
   const db = getDb();
-  const session = await sessionRepo.sessionById(db, input.sessionId);
+
+  const [session, existing, openSessionsWithSerial, location] = await Promise.all([
+    sessionRepo.sessionById(db, input.sessionId),
+    sessionItemRepo.getSessionItem(db, input.sessionId, input.serialId),
+    sessionRepo.openSessionsContainingSerialWithOwner(db, input.serialId),
+    serialStateRepo.getLocation(db, input.serialId),
+  ]);
+
   if (!session) throw new NotFoundError("Session", input.sessionId);
   if (session.status !== "OPEN") throw new InvariantViolationError("Session is not open");
 
-  const existing = await sessionItemRepo.getSessionItem(db, input.sessionId, input.serialId);
   if (existing) {
     return { ok: false, error: "DUPLICATE", message: "Serial already scanned in this session" };
   }
 
-  // Default flow for all serials: if this serial is in any other OPEN session (abandoned/stale), cancel those sessions so the scan can proceed in the current session.
-  const openSessionsWithSerial = await sessionRepo.openSessionsContainingSerialWithOwner(db, input.serialId);
   const otherSessions = openSessionsWithSerial.filter((r) => r.sessionId !== input.sessionId);
   if (otherSessions.length > 0) {
     await db.transaction(async (tx) => {
@@ -98,8 +102,6 @@ export async function addScan(input: AddScanInput, userId: string) {
       }
     });
   }
-
-  const location = await serialStateRepo.getLocation(db, input.serialId);
   const expectedFrom = session.fromLocation;
 
   let scanOk =
@@ -180,16 +182,20 @@ export async function commitSession(input: CommitSessionInput, userId: string) {
           : session.type === "RETURN_SCAN"
             ? "RETURN_IN_TRANSIT"
             : "RETURNED";
-    for (const i of items) {
-      if (i.scanStatus === "OK") {
-        await taskSerialRepo.updateTaskSerialStatus(tx, session.taskId, i.serialId, newSerialStatus as "PACKED" | "RECEIVED" | "RETURN_IN_TRANSIT" | "RETURNED");
-        const location = getLocationForTaskSerialStatus(newSerialStatus as "RECEIVED" | "RETURN_IN_TRANSIT" | "RETURNED");
-        if (location) await serialStateRepo.upsertLocation(tx, i.serialId, location);
-      } else if (session.type === "PICK") {
-        await taskSerialRepo.updateTaskSerialStatus(tx, session.taskId, i.serialId, "NOT_FOUND");
-        const notFoundLocation = getLocationForTaskSerialStatus("NOT_FOUND");
-        if (notFoundLocation) await serialStateRepo.upsertLocation(tx, i.serialId, notFoundLocation);
-      }
+    const okSerialIds = items.filter((i) => i.scanStatus === "OK").map((i) => i.serialId);
+    const errorSerialIds = session.type === "PICK"
+      ? items.filter((i) => i.scanStatus !== "OK").map((i) => i.serialId)
+      : [];
+
+    if (okSerialIds.length > 0) {
+      await taskSerialRepo.updateTaskSerialStatuses(tx, session.taskId, okSerialIds.map((id) => ({ serialId: id, status: newSerialStatus as "PACKED" | "RECEIVED" | "RETURN_IN_TRANSIT" | "RETURNED" })));
+      const location = getLocationForTaskSerialStatus(newSerialStatus as "RECEIVED" | "RETURN_IN_TRANSIT" | "RETURNED");
+      if (location) await serialStateRepo.upsertLocations(tx, okSerialIds, location);
+    }
+    if (errorSerialIds.length > 0) {
+      await taskSerialRepo.updateTaskSerialStatuses(tx, session.taskId, errorSerialIds.map((id) => ({ serialId: id, status: "NOT_FOUND" })));
+      const notFoundLocation = getLocationForTaskSerialStatus("NOT_FOUND");
+      if (notFoundLocation) await serialStateRepo.upsertLocations(tx, errorSerialIds, notFoundLocation);
     }
 
     await sessionRepo.commitSession(tx, input.sessionId);

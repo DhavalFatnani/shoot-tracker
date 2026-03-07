@@ -17,6 +17,21 @@ export async function countRequestedSerialsForTaskIds(db: Database | Tx, taskIds
   return rows[0]?.count ?? 0;
 }
 
+/** Count of task_serials (units) per task for the given task IDs. Returns taskId -> count. */
+export async function countSerialsByTaskIds(db: Database | Tx, taskIds: string[]): Promise<Map<string, number>> {
+  if (taskIds.length === 0) return new Map();
+  const rows = await db
+    .select({ taskId: taskSerials.taskId, count: sql<number>`count(*)::int` })
+    .from(taskSerials)
+    .where(inArray(taskSerials.taskId, taskIds))
+    .groupBy(taskSerials.taskId);
+  const map = new Map<string, number>();
+  for (const r of rows) {
+    map.set(r.taskId, r.count);
+  }
+  return map;
+}
+
 /** Task IDs (from the given list) that have at least one serial RECEIVED or RETURN_CREATED (for display: don't show "Pick in progress"). */
 export async function taskIdsWithReceivedSerials(db: Database | Tx, taskIds: string[]): Promise<string[]> {
   if (taskIds.length === 0) return [];
@@ -88,8 +103,18 @@ export async function updateTaskSerialStatuses(
   taskId: string,
   updates: { serialId: string; status: TaskSerialStatus }[]
 ) {
+  if (updates.length === 0) return;
+  const byStatus = new Map<TaskSerialStatus, string[]>();
   for (const u of updates) {
-    await updateTaskSerialStatus(tx, taskId, u.serialId, u.status);
+    const list = byStatus.get(u.status) ?? [];
+    list.push(u.serialId);
+    byStatus.set(u.status, list);
+  }
+  for (const [status, serialIds] of byStatus) {
+    await tx
+      .update(taskSerials)
+      .set({ status })
+      .where(and(eq(taskSerials.taskId, taskId), inArray(taskSerials.serialId, serialIds)));
   }
 }
 

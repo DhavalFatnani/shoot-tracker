@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { SessionUser } from "@/lib/auth/get-session";
 import { useTheme } from "@/components/theme-provider";
 import { DisputesBell } from "@/components/disputes-bell";
+import { LogoMark } from "@/components/logo";
 
 type NavItem = { href: string; label: string; icon: string; highlight?: boolean };
 
@@ -17,7 +18,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/activity", label: "Activity", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
   { href: "/serials/timeline", label: "Timeline", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
   { href: "/buffer-aging", label: "Buffer", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
-  { href: "/sessions/scan", label: "Scan", icon: "M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h12a1 1 0 001-1v-4a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z", highlight: true },
+  { href: "/sessions/scan", label: "Scan Session", icon: "M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h12a1 1 0 001-1v-4a1 1 0 00-1-1H5a1 1 0 00-1 1v4a1 1 0 001 1z", highlight: true },
 ];
 
 function navItemsForRole(role: string): NavItem[] {
@@ -39,12 +40,12 @@ function navItemsForRole(role: string): NavItem[] {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-200",
-  OPS_USER: "bg-amber-100 text-amber-700",
-  SHOOT_USER: "bg-emerald-100 text-emerald-700",
+  ADMIN: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200",
+  OPS_USER: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200",
+  SHOOT_USER: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200",
 };
 
-const ADMIN_ITEM: NavItem = { href: "/admin", label: "Admin", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" };
+const ADMIN_ITEM: NavItem = { href: "/admin", label: "Admin Console", icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" };
 
 export function Sidebar({
   session,
@@ -54,9 +55,22 @@ export function Sidebar({
   signOut: () => Promise<void>;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const drawerRef = useRef<HTMLElement | null>(null);
   const { theme, setTheme } = useTheme();
+
+  async function handleSignOut(e: React.FormEvent) {
+    e.preventDefault();
+    if (signingOut) return;
+    setSigningOut(true);
+    signOut()
+      .catch(() => {})
+      .finally(() => {
+        router.replace("/");
+      });
+  }
   const navItems = navItemsForRole(session.role);
   const mainItems = navItems.filter((i) => i.href !== "/sessions/scan");
   const scanItem = navItems.find((i) => i.href === "/sessions/scan");
@@ -99,28 +113,28 @@ export function Sidebar({
   };
 
   const linkClass = (item: NavItem) =>
-    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+    `flex items-center gap-3 rounded-xl py-2.5 pl-3 pr-3 text-sm font-semibold transition-all duration-200 border-l-[3px] ${
       isActive(item.href)
-        ? "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-200"
-        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-    } ${item.highlight ? "ring-1 ring-emerald-200 bg-emerald-50/50 dark:ring-emerald-800 dark:bg-emerald-900/20" : ""}`;
+        ? "bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-500"
+        : "border-transparent text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-indigo-400"
+    } ${item.highlight ? "ring-1 ring-amber-200 dark:ring-amber-900/50 bg-amber-50 dark:bg-amber-950/20" : ""}`;
 
-  const initial = (session.email ?? session.id).charAt(0).toUpperCase();
+  const displayName =
+    session.firstName && session.lastName
+      ? `${session.firstName} ${session.lastName}`
+      : session.email ?? "Signed in";
+  const initial = displayName.charAt(0).toUpperCase();
 
   const navContent = (
     <>
-      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-zinc-200 px-4 dark:border-zinc-800">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600 text-white shadow-sm">
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-          </svg>
-        </div>
-        <span className="font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">ShootTrack</span>
+      <div className="flex h-20 shrink-0 items-center gap-3 border-b border-slate-200 px-6 dark:border-slate-800">
+        <LogoMark size="md" />
+        <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">ShootTrack</span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-        <span className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Main</span>
-        {mainItems.map((item) => (
+        <span className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Operations</span>
+        {mainItems.filter((i) => !["/activity", "/serials/timeline", "/buffer-aging"].includes(i.href)).map((item) => (
           <div key={item.href} className="flex items-center justify-between gap-2">
             <Link href={item.href} className={`min-w-0 flex-1 ${linkClass(item)}`} onClick={() => setMobileOpen(false)}>
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,9 +145,18 @@ export function Sidebar({
             {item.href === "/disputes" && <DisputesBell />}
           </div>
         ))}
+        <span className="mt-6 px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Logs &amp; Analytics</span>
+        {mainItems.some((i) => ["/activity", "/serials/timeline", "/buffer-aging"].includes(i.href)) && mainItems.filter((i) => ["/activity", "/serials/timeline", "/buffer-aging"].includes(i.href)).map((item) => (
+          <Link key={item.href} href={item.href} className={linkClass(item)} onClick={() => setMobileOpen(false)}>
+            <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+            </svg>
+            {item.label}
+          </Link>
+        ))}
+        <span className="mt-6 px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Tools</span>
         {scanItem && (
           <>
-            <span className="mt-2 px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Scan</span>
             <Link href={scanItem.href} className={linkClass(scanItem)} onClick={() => setMobileOpen(false)}>
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={scanItem.icon} />
@@ -143,62 +166,87 @@ export function Sidebar({
           </>
         )}
         {showAdmin && (
-          <>
-            <span className="mt-2 px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Admin</span>
-            <Link href="/admin" className={linkClass(ADMIN_ITEM)} onClick={() => setMobileOpen(false)}>
+          <Link href="/admin" className={linkClass(ADMIN_ITEM)} onClick={() => setMobileOpen(false)}>
               <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ADMIN_ITEM.icon} />
               </svg>
               {ADMIN_ITEM.label}
             </Link>
-          </>
         )}
       </nav>
 
-      <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
-        <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="border-t border-slate-200 p-4 dark:border-slate-800">
+        {/* Theme toggle: pill with sun / moon icons only */}
+        <div className="mb-4 flex rounded-full bg-slate-100 p-1 dark:bg-slate-800/80">
           <button
             type="button"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            onClick={() => setTheme("light")}
+            className={`flex-1 flex items-center justify-center rounded-full py-2.5 text-sm font-medium transition ${theme === "light" ? "bg-white text-indigo-600 shadow-sm dark:bg-slate-700 dark:text-indigo-400" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
+            aria-label="Light mode"
           >
-            {theme === "dark" ? (
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-            ) : (
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-            )}
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTheme("dark")}
+            className={`flex-1 flex items-center justify-center rounded-full py-2.5 text-sm font-medium transition ${theme === "dark" ? "bg-slate-700 text-white shadow-sm dark:bg-slate-600" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"}`}
+            aria-label="Dark mode"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
           </button>
         </div>
-        <Link
-          href="/profile"
-          className="mb-3 flex items-center gap-3 rounded-lg px-3 py-2.5 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          onClick={() => setMobileOpen(false)}
-        >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-100 text-sm font-semibold text-teal-700 dark:bg-teal-900/50 dark:text-teal-200">
-            {initial}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{session.email ?? "Signed in"}</p>
-            <p className={`text-xs ${ROLE_COLORS[session.role] ?? "text-zinc-500 dark:text-zinc-400"}`}>
-              {session.role.replace("_", " ")}
-            </p>
-          </div>
-        </Link>
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+
+        {/* Profile row: avatar | name + badge + Change Password | logout icon */}
+        <div className="flex items-start gap-3">
+          <Link
+            href="/profile"
+            className="shrink-0 rounded-xl transition opacity-90 hover:opacity-100"
+            onClick={() => setMobileOpen(false)}
           >
-            <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Sign out
-          </button>
-        </form>
-        <p className="mt-2 text-center text-[10px] text-zinc-400 dark:text-zinc-500">
-          Press <kbd className="rounded border border-zinc-300 px-1 font-mono dark:border-zinc-600">?</kbd> for shortcuts
-        </p>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+              {initial}
+            </div>
+          </Link>
+          <div className="min-w-0 flex-1">
+            <Link
+              href="/profile"
+              className="block rounded-lg -m-1 p-1 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+              onClick={() => setMobileOpen(false)}
+            >
+              <p className="truncate text-sm font-bold text-slate-900 dark:text-white">{displayName}</p>
+            </Link>
+            <span className={`mt-0.5 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${ROLE_COLORS[session.role] ?? "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"}`}>
+              {session.role.replace("_", " ")}
+            </span>
+            <Link
+              href="/profile/change-password"
+              onClick={() => setMobileOpen(false)}
+              className="mt-0.5 block text-xs font-medium text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
+            >
+              Change Password
+            </Link>
+          </div>
+          <form onSubmit={handleSignOut} className="shrink-0">
+            <button
+              type="submit"
+              disabled={signingOut}
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              aria-label="Sign out"
+            >
+              {signingOut ? (
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" aria-hidden />
+              ) : (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </>
   );
@@ -206,19 +254,22 @@ export function Sidebar({
   return (
     <>
       {/* Mobile: hamburger */}
-      <div className="fixed left-0 top-0 z-50 flex h-14 items-center border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden">
+      <div className="fixed left-0 top-0 z-50 flex h-14 items-center gap-2 border-b border-slate-200 bg-white/95 px-4 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 lg:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen((o) => !o)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
           aria-label="Open menu"
         >
           <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <Link href="/dashboard" className="ml-2 font-semibold text-zinc-900 dark:text-zinc-100">
-          ShootTrack
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <LogoMark size="sm" className="shadow-none ring-0" />
+          <span className="font-display font-bold tracking-tight text-slate-900 dark:text-white">
+            ShootTrack
+          </span>
         </Link>
       </div>
 
@@ -226,13 +277,13 @@ export function Sidebar({
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-zinc-900/50 lg:hidden"
+            className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"
             aria-hidden
             onClick={() => setMobileOpen(false)}
           />
           <aside
             ref={drawerRef}
-            className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900 lg:hidden"
+            className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col border-r border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 lg:hidden"
           >
             {navContent}
           </aside>
@@ -240,7 +291,7 @@ export function Sidebar({
       )}
 
       {/* Desktop: fixed sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 lg:flex">
         {navContent}
       </aside>
 
@@ -248,7 +299,7 @@ export function Sidebar({
       {scanItem && (
         <Link
           href="/sessions/scan"
-          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 lg:hidden"
+          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-900/30 hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 lg:hidden"
           aria-label="Quick scan"
         >
           <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

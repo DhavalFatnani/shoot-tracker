@@ -61,3 +61,20 @@ export function formatDateTimeCompactIST(value: Date | string | number | null | 
     hour12: false,
   });
 }
+
+/** Relative time for activity feed (e.g. "2 mins ago", "1 hour ago"). Uses server time. */
+export function formatRelativeTime(value: Date | string | number | null | undefined): string {
+  if (value == null) return "—";
+  const d = typeof value === "string" || typeof value === "number" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "—";
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins} min${diffMins !== 1 ? "s" : ""} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  return formatDateTimeCompactIST(d);
+}

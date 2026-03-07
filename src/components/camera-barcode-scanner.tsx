@@ -9,6 +9,19 @@ type CameraBarcodeScannerProps = {
   validate?: (value: string) => boolean;
 };
 
+/** html5-qrcode can throw or reject with a string (e.g. "Cannot stop, scanner is not running or paused."). Never let that escape. */
+function safeStop(
+  scanner: import("html5-qrcode").Html5Qrcode | null
+): void {
+  if (!scanner) return;
+  try {
+    const p = scanner.stop();
+    if (p && typeof p.catch === "function") p.catch((_e: unknown) => {});
+  } catch {
+    // Library sometimes throws a string instead of rejecting; ignore.
+  }
+}
+
 export function CameraBarcodeScanner({ onScan, onClose, validate }: CameraBarcodeScannerProps) {
   const containerId = useId().replace(/:/g, "");
   const scannerRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
@@ -46,10 +59,13 @@ export function CameraBarcodeScanner({ onScan, onClose, validate }: CameraBarcod
             const value = digitsOnly.slice(0, 10);
             if (value.length !== 10) return;
             if (validateRef.current && !validateRef.current(value)) return;
-            scanner.stop().catch(() => {});
-            scannerRef.current = null;
-            onScanRef.current(value);
-            onCloseRef.current();
+            try {
+              safeStop(scanner);
+            } finally {
+              scannerRef.current = null;
+              onScanRef.current(value);
+              onCloseRef.current();
+            }
           },
           () => {
             // Ignore per-frame scan errors (no barcode in view)
@@ -67,9 +83,11 @@ export function CameraBarcodeScanner({ onScan, onClose, validate }: CameraBarcod
     start();
     return () => {
       mounted = false;
-      const s = scannerRef.current;
-      if (s) {
-        s.stop().catch(() => {});
+      try {
+        const s = scannerRef.current;
+        safeStop(s);
+        scannerRef.current = null;
+      } catch {
         scannerRef.current = null;
       }
     };

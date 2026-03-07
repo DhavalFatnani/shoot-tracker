@@ -2,7 +2,7 @@
 export const ACTIVITY_EVENT_COLORS: Record<string, string> = {
   PICK: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
   RECEIPT: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
-  RETURN_TO_WH: "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-200",
+  RETURN_TO_WH: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200",
   RETURN_TO_BUFFER: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
   MARK_SOLD: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200",
   MARK_LOST: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-200",
@@ -35,7 +35,7 @@ const TASK_TIMELINE_ENTRY_CLASS: Record<string, string> = {
   pick: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
   receipt: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
   "return-scan": "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
-  "return-verify": "bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-200",
+  "return-verify": "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-200",
   dispatched: "bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200",
   closed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200",
 };

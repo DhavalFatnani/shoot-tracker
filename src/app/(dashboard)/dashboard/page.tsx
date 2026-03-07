@@ -1,8 +1,28 @@
+import { Suspense } from "react";
 import { getSession } from "@/lib/auth/get-session";
 import Link from "next/link";
-import { getDashboardKpis, type DashboardKpis } from "@/app/actions/dashboard-actions";
 
-type CardDef = { title: string; subtitle: string; href: string; icon: string; color: string; highlight?: boolean };
+export const dynamic = "force-dynamic";
+import {
+  getDashboardKpis,
+  getDashboardRecentActivity,
+  type DashboardKpis,
+  type DashboardActivityItem,
+} from "@/app/actions/dashboard-actions";
+import { formatRelativeTime } from "@/lib/format-date";
+import { DashboardGreeting } from "./dashboard-greeting";
+import { DisputesBell } from "@/components/disputes-bell";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type CardDef = {
+  title: string;
+  subtitle: string;
+  href: string;
+  icon: string;
+  color: string;
+  highlight?: boolean;
+  actionLabel?: string;
+};
 
 const ICONS: Record<string, string> = {
   tasks: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
@@ -36,6 +56,7 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
       href: "/tasks",
       icon: ICONS.tasks,
       color: "bg-blue-500",
+      actionLabel: "Manage tasks",
     });
   } else if (ops) {
     const parts = kpis ? [kpis.pendingAction && `${kpis.pendingAction} pending action`, kpis.pickingPending && `${kpis.pickingPending} pending`, kpis.packed && `${kpis.packed} in picking`].filter(Boolean) : [];
@@ -45,6 +66,7 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
       href: "/tasks",
       icon: ICONS.tasks,
       color: "bg-blue-500",
+      actionLabel: "Manage tasks",
     });
   } else {
     const parts = kpis && kpis.inTransit ? [`${kpis.inTransit} awaiting receipt`] : [];
@@ -54,30 +76,35 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
       href: "/tasks",
       icon: ICONS.tasks,
       color: "bg-blue-500",
+      actionLabel: "Manage tasks",
     });
   }
 
   if (shoot) {
     cards.push({
       title: "Create request",
-      subtitle: "New task from serials",
+      subtitle: "Initialize new task sessions from serialized inventory.",
       href: "/tasks/create",
       icon: ICONS.create,
-      color: "bg-teal-500",
+      color: "bg-indigo-500",
+      actionLabel: "New session",
     });
   }
 
   cards.push({
     title: "Disputes",
-    subtitle: kpis && kpis.openDisputes ? `${kpis.openDisputes} open` : "Open & resolved",
+    subtitle: kpis && kpis.openDisputes
+      ? `${kpis.openDisputes} Open items require urgent attention and verification.`
+      : "Open & resolved",
     href: "/disputes",
     icon: ICONS.disputes,
     color: "bg-amber-500",
+    actionLabel: "Resolve issues",
   });
 
   cards.push({
     title: "Serial timeline",
-    subtitle: "Audit trail",
+    subtitle: "Full audit trail and lifecycle history for all serial numbers.",
     href: "/serials/timeline",
     icon: ICONS.timeline,
     color: "bg-purple-500",
@@ -86,7 +113,9 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
   if (ops) {
     cards.push({
       title: "Buffer aging",
-      subtitle: kpis && kpis.bufferCount ? `${kpis.bufferCount} in buffer` : "Buffer serials",
+      subtitle: kpis && kpis.bufferCount
+        ? `${kpis.bufferCount} in buffer`
+        : "Monitor inventory shelf-life and buffer zone efficiency.",
       href: "/buffer-aging",
       icon: ICONS.buffer,
       color: "bg-rose-500",
@@ -96,27 +125,28 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
   if (shoot) {
     cards.push({
       title: "Create return",
-      subtitle: "Return items to warehouse",
+      subtitle: "Process inbound returns from field shoots to warehouse.",
       href: "/returns/create",
       icon: ICONS.returns,
-      color: "bg-teal-500",
+      color: "bg-indigo-500",
     });
   }
 
   // Scan — primary action for OPS & Shoot
   cards.push({
-    title: "Scan",
-    subtitle: "Pick · Receipt · Return",
+    title: "Quick Scan",
+    subtitle: "Launch barcode scanner for pick, receipt, or return verification.",
     href: "/sessions/scan",
     icon: ICONS.scan,
-      color: "bg-teal-500",
+    color: "bg-indigo-500",
     highlight: role !== "ADMIN",
+    actionLabel: "Start scanning",
   });
 
   if (role === "ADMIN") {
     cards.push({
       title: "Admin",
-      subtitle: "Users, teams, warehouses",
+      subtitle: "Manage users, teams, and warehouse configurations.",
       href: "/admin",
       icon: ICONS.admin,
       color: "bg-zinc-600",
@@ -126,58 +156,220 @@ function buildCards(role: string, kpis: { pickingPending: number; packed: number
   return cards;
 }
 
-export default async function DashboardPage() {
-  let session = null;
+function DashboardDataSkeleton() {
+  return (
+    <>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Skeleton key={i} className="h-40 rounded-2xl" />
+        ))}
+      </div>
+      <section className="mt-10" aria-labelledby="recent-activity-heading">
+        <div className="mb-4 flex items-center justify-between">
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="table-wrapper">
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      </section>
+    </>
+  );
+}
+
+async function DashboardData({
+  role,
+  isAdmin,
+}: {
+  role: string;
+  showCreateRequest: boolean;
+  isAdmin: boolean;
+}) {
   let kpis: DashboardKpis | null = null;
+  let recentActivity: DashboardActivityItem[] = [];
   try {
-    session = await getSession();
-    const kpisResult = await getDashboardKpis();
+    const [kpisResult, activityResult] = await Promise.all([
+      getDashboardKpis(),
+      getDashboardRecentActivity(10),
+    ]);
     kpis = kpisResult.success ? kpisResult.data : null;
+    recentActivity = activityResult.success ? activityResult.data : [];
   } catch {
-    // Layout already validated session; if page-level fetch fails, render with fallbacks
+    // Render with fallbacks
   }
-  const role = session?.role ?? "SHOOT_USER";
   const cards = buildCards(role, kpis);
-  const greeting = session?.email ? session.email.split("@")[0] : "there";
-  const roleLabel =
-    role === "OPS_USER" ? "Ops" : role === "SHOOT_USER" ? "Shoot" : role === "ADMIN" ? "Admin" : "—";
 
   return (
-    <div className="min-h-[60vh]">
-      <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Hi, {greeting}
-        </h1>
-        <span className="text-sm font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-          {roleLabel}
-        </span>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map((card) => (
           <Link
             key={card.href}
             href={card.href}
-            className={`group relative flex flex-col rounded-xl border bg-white p-5 shadow-sm transition duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 ${
+            className={`group relative flex flex-col p-6 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950 ${
               card.highlight
-                ? "border-teal-200 bg-gradient-to-br from-teal-50/80 to-white dark:border-teal-800 dark:from-teal-900/20 dark:to-zinc-800"
-                : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-800/80 dark:hover:border-zinc-600"
+                ? "rounded-2xl border-0 bg-gradient-to-br from-indigo-600 to-indigo-700 shadow-xl shadow-indigo-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl dark:from-indigo-500 dark:to-indigo-600"
+                : "section-card section-card-hover rounded-2xl border border-slate-200 hover:-translate-y-0.5 hover:border-indigo-200 dark:border-slate-800 dark:hover:border-indigo-900/50"
             }`}
           >
-            <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl ${card.color} text-white shadow-sm`}>
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className={`mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl ${card.highlight ? "bg-white/20 ring-1 ring-white/30" : card.color} text-white shadow-md transition-transform group-hover:scale-110`}>
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={card.icon} />
               </svg>
             </div>
-            <h2 className="font-semibold text-zinc-900 transition group-hover:text-teal-600 dark:text-zinc-100 dark:group-hover:text-teal-400">
+            <h2 className={`text-xl font-display font-bold ${card.highlight ? "text-white" : "text-slate-900 dark:text-white"}`}>
               {card.title}
             </h2>
-            <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className={`mt-2 text-sm leading-relaxed ${card.highlight ? "text-white/80" : "text-slate-500 dark:text-slate-400"}`}>
               {card.subtitle}
             </p>
+            {card.actionLabel && (
+              <div className={`mt-4 flex items-center gap-1 text-sm font-bold ${card.highlight ? "text-white" : "text-indigo-600 dark:text-indigo-400"}`}>
+                {card.actionLabel}
+                {card.highlight && card.actionLabel === "Start scanning" ? (
+                  <span aria-hidden>→</span>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                )}
+              </div>
+            )}
           </Link>
         ))}
       </div>
+
+      <section className="mt-10" aria-labelledby="recent-activity-heading">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 id="recent-activity-heading" className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+            Recent Activity
+          </h2>
+          {isAdmin && (
+            <Link
+              href="/activity"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              View all activity
+            </Link>
+          )}
+        </div>
+        <div className="table-wrapper">
+          <table className="table table-sticky table-row-hover">
+            <thead>
+              <tr>
+                <th className="table-th">Type</th>
+                <th className="table-th">Description</th>
+                <th className="table-th">User</th>
+                <th className="table-th">Date</th>
+                <th className="table-th">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentActivity.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="table-td py-10 text-center text-slate-500 dark:text-slate-400">
+                    No recent activity yet.
+                  </td>
+                </tr>
+              ) : (
+                recentActivity.map((item) => (
+                  <tr key={item.id}>
+                    <td className="table-td">
+                      <span
+                        className={`badge ${
+                          item.type === "Dispatch"
+                            ? "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200"
+                            : item.type === "Return"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200"
+                              : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200"
+                        }`}
+                      >
+                        {item.type}
+                      </span>
+                    </td>
+                    <td className="table-td">
+                      {item.taskId ? (
+                        <Link
+                          href={`/tasks/${item.taskId}`}
+                          className="font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400"
+                        >
+                          {item.description}
+                        </Link>
+                      ) : (
+                        item.description
+                      )}
+                    </td>
+                    <td className="table-td">{item.userDisplayName}</td>
+                    <td className="table-td text-slate-500 dark:text-slate-400">
+                      {formatRelativeTime(item.createdAt)}
+                    </td>
+                    <td className="table-td">
+                      <span
+                        className={`badge ${
+                          item.status === "SUCCESS"
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200"
+                            : item.status === "ACTIVE"
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
+                              : item.status === "OPEN"
+                                ? "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </>
+  );
+}
+
+export default async function DashboardPage() {
+  let session = null;
+  try {
+    session = await getSession();
+  } catch {
+    // Layout already validated session
+  }
+  const role = session?.role ?? "SHOOT_USER";
+  const displayName =
+    session?.firstName && session?.lastName
+      ? `${session.firstName} ${session.lastName}`
+      : session?.email?.split("@")[0] || "there";
+  const showCreateRequest = role === "SHOOT_USER" || role === "ADMIN";
+  const isAdmin = role === "ADMIN";
+
+  return (
+    <div className="min-h-[60vh]">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="page-title">
+            <DashboardGreeting displayName={displayName} />
+          </h1>
+          <p className="page-subtitle mt-1">
+            Here&apos;s what&apos;s happening across your warehouse today.
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {showCreateRequest && (
+            <Link href="/tasks/create" className="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Create Request
+            </Link>
+          )}
+          <DisputesBell alwaysShowLink />
+        </div>
+      </div>
+
+      <Suspense fallback={<DashboardDataSkeleton />}>
+        <DashboardData role={role} showCreateRequest={showCreateRequest} isAdmin={isAdmin} />
+      </Suspense>
     </div>
   );
 }

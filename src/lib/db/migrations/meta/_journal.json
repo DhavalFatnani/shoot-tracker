@@ -24,6 +24,8 @@
     { "idx": 19, "version": "7", "when": 1773100009000, "tag": "0012_location_qc_fail", "breakpoints": true },
     { "idx": 20, "version": "7", "when": 1773100009500, "tag": "0020_profiles_first_last_name", "breakpoints": true },
     { "idx": 21, "version": "7", "when": 1773100010000, "tag": "0021_performance_indexes", "breakpoints": true },
-    { "idx": 22, "version": "7", "when": 1773100010500, "tag": "0022_dispatch_pending_packed", "breakpoints": true }
+    { "idx": 22, "version": "7", "when": 1773100010500, "tag": "0022_dispatch_pending_packed", "breakpoints": true },
+    { "idx": 23, "version": "7", "when": 1773100011000, "tag": "0023_disputes_raised_by", "breakpoints": true },
+    { "idx": 24, "version": "7", "when": 1773100011500, "tag": "0024_add_performance_indexes", "breakpoints": true }
   ]
 }

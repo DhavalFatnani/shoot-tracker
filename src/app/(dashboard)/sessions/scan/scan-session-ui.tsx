@@ -8,28 +8,47 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CameraBarcodeScanner } from "@/components/camera-barcode-scanner";
 import { useToast } from "@/components/ui/toaster";
 
-type SessionItem = { sessionId: string; serialId: string; scanStatus: string; errorReason: string | null };
+type SessionItem = { sessionId: string; serialId: string; scanStatus: string; errorReason: string | null; scannedAt: number };
 
 type SessionType = "PICK" | "RECEIPT" | "RETURN_SCAN" | "RETURN_VERIFY";
 
-const SESSION_TYPES_BY_ROLE: Record<string, { value: SessionType; label: string }[]> = {
+const SESSION_TYPES_BY_ROLE: Record<string, { value: SessionType; label: string; shortLabel: string }[]> = {
   SHOOT_USER: [
-    { value: "RECEIPT", label: "Receipt" },
-    { value: "RETURN_SCAN", label: "Return scan" },
+    { value: "RECEIPT", label: "Receipt", shortLabel: "RECEIVE" },
+    { value: "RETURN_SCAN", label: "Return scan", shortLabel: "RETURN" },
   ],
   OPS_USER: [
-    { value: "PICK", label: "Pick" },
-    { value: "RETURN_VERIFY", label: "Return verify" },
+    { value: "PICK", label: "Pick", shortLabel: "PICK MODE" },
+    { value: "RETURN_VERIFY", label: "Return verify", shortLabel: "RETURN" },
   ],
   ADMIN: [
-    { value: "PICK", label: "Pick" },
-    { value: "RECEIPT", label: "Receipt" },
-    { value: "RETURN_SCAN", label: "Return scan" },
-    { value: "RETURN_VERIFY", label: "Return verify" },
+    { value: "PICK", label: "Pick", shortLabel: "PICK MODE" },
+    { value: "RECEIPT", label: "Receipt", shortLabel: "RECEIVE" },
+    { value: "RETURN_SCAN", label: "Return scan", shortLabel: "RETURN" },
+    { value: "RETURN_VERIFY", label: "Return verify", shortLabel: "RETURN" },
   ],
 };
 
-export function ScanSessionUI({ taskId, userRole, defaultSessionType, nonReturnableSerialIds = [] }: { taskId: string; userRole: string; defaultSessionType?: string; nonReturnableSerialIds?: string[] }) {
+function formatScannedTime(ms: number) {
+  const d = new Date(ms);
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+export function ScanSessionUI({
+  taskId,
+  userRole,
+  defaultSessionType,
+  nonReturnableSerialIds = [],
+  taskDisplayName,
+  taskSerial,
+}: {
+  taskId: string;
+  userRole: string;
+  defaultSessionType?: string;
+  nonReturnableSerialIds?: string[];
+  taskDisplayName?: string;
+  taskSerial?: string;
+}) {
   const allowedTypes = SESSION_TYPES_BY_ROLE[userRole] ?? SESSION_TYPES_BY_ROLE.ADMIN;
   const initialType: SessionType =
     defaultSessionType && allowedTypes.some((t) => t.value === defaultSessionType) ? (defaultSessionType as SessionType) : allowedTypes[0].value;
@@ -60,12 +79,16 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType, nonReturna
     formData.set("taskId", taskId);
     formData.set("type", sessionType);
     startTransition(async () => {
-      const result = await startSession(formData);
-      if (result.success && result.data) {
-        setSessionId(result.data.sessionId);
-        setItems([]);
-      } else {
-        setMessage(result.error ?? "Failed to start session");
+      try {
+        const result = await startSession(formData);
+        if (result.success && result.data) {
+          setSessionId(result.data.sessionId);
+          setItems([]);
+        } else {
+          setMessage(result.error ?? "Failed to start session");
+        }
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : "Something went wrong. Please try again.");
       }
     });
   }
@@ -77,24 +100,31 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType, nonReturna
     formData.set("sessionId", sessionId);
     formData.set("serialId", serial);
     startTransition(async () => {
-      const result = await addScan(formData);
-      if (result.success && result.data) {
-        const isDuplicate = result.data.ok === false && result.data.error === "DUPLICATE";
-        if (isDuplicate) {
-          setMessage(result.data?.message ?? "Serial already scanned in this session");
-          toast(result.data?.message ?? "Serial already scanned in this session", { variant: "error" });
-          setScanInput("");
-          prevLenRef.current = 0;
-          scanningRef.current = false;
+      try {
+        const result = await addScan(formData);
+        if (result.success && result.data) {
+          const isDuplicate = result.data.ok === false && result.data.error === "DUPLICATE";
+          if (isDuplicate) {
+            setMessage(result.data?.message ?? "Serial already scanned in this session");
+            toast(result.data?.message ?? "Serial already scanned in this session", { variant: "error" });
+            setScanInput("");
+            prevLenRef.current = 0;
+            scanningRef.current = false;
+          } else {
+            setItems((prev) => [
+              ...prev,
+              { sessionId, serialId: serial, scanStatus: result.data!.scanStatus ?? "OK", errorReason: result.data?.errorReason ?? null, scannedAt: Date.now() },
+            ]);
+            setScanInput("");
+            prevLenRef.current = 0;
+            scanningRef.current = false;
+            setMessage(result.data?.ok === false ? (result.data?.message ?? "Error") : null);
+          }
         } else {
-          setItems((prev) => [...prev, { sessionId, serialId: serial, scanStatus: result.data!.scanStatus ?? "OK", errorReason: result.data?.errorReason ?? null }]);
-          setScanInput("");
-          prevLenRef.current = 0;
-          scanningRef.current = false;
-          setMessage(result.data?.ok === false ? (result.data?.message ?? "Error") : null);
+          setMessage(result.error ?? "Failed to add scan");
         }
-      } else {
-        setMessage(result.error ?? "Failed to add scan");
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : "Something went wrong. Please try again.");
       }
     });
   }
@@ -115,14 +145,18 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType, nonReturna
     const formData = new FormData();
     formData.set("sessionId", sessionId);
     startTransition(async () => {
-      const result = await commitSession(formData);
-      if (result.success) {
-        toast("Session committed successfully.", { variant: "success" });
-        setSessionId(null);
-        setItems([]);
-        router.refresh();
-      } else {
-        setMessage(result.error ?? "Failed to commit");
+      try {
+        const result = await commitSession(formData);
+        if (result.success) {
+          toast("Session committed successfully.", { variant: "success" });
+          setSessionId(null);
+          setItems([]);
+          router.refresh();
+        } else {
+          setMessage(result.error ?? "Failed to commit");
+        }
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : "Something went wrong. Please try again.");
       }
     });
   }
@@ -210,93 +244,148 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType, nonReturna
     // Let single chars and Backspace reach the input so onInput can apply scanner rules
   }
 
+  const modeLabel = (value: SessionType) => {
+    const t = allowedTypes.find((x) => x.value === value);
+    return t?.shortLabel ?? t?.label ?? value;
+  };
+
   return (
     <div className="space-y-6">
       {!sessionId ? (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Start a new session</h2>
-          <div className="flex items-end gap-4">
-            <div>
-              <label htmlFor="session-type" className="mb-1.5 block text-sm font-medium text-slate-700">Session type</label>
-              <select
-                id="session-type"
-                value={sessionType}
-                onChange={(e) => setSessionType(e.target.value as SessionType)}
-                className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">Start a scan session</h2>
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            Choose a mode and start the session to begin scanning.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            {allowedTypes.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => setSessionType(t.value)}
+                className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+                  sessionType === t.value
+                    ? "border-indigo-500 bg-indigo-600 text-white hover:bg-indigo-500 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+                    : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                }`}
               >
-                {allowedTypes.map((t) => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
+                {t.value === "PICK" && (
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  </svg>
+                )}
+                {(t.value === "RECEIPT" || t.value === "RETURN_SCAN") && (
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8 4-8-4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                )}
+                {t.value === "RETURN_VERIFY" && (
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                {modeLabel(t.value)}
+              </button>
+            ))}
             <button
               type="button"
               onClick={handleStartSession}
               disabled={pending}
-              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:opacity-60"
+              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400"
             >
-              {pending ? "Starting..." : "Start session"}
+              {pending ? "Starting…" : "Start session"}
             </button>
           </div>
-          {message && <p className="mt-3 text-sm text-amber-600">{message}</p>}
+          {message && <p className="mt-3 text-sm text-amber-600 dark:text-amber-400">{message}</p>}
         </div>
       ) : (
         <>
           {sessionType === "RETURN_VERIFY" && nonReturnableSet.size > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
               <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                 This task has {nonReturnableSet.size} non-returnable item{nonReturnableSet.size !== 1 ? "s" : ""} in the return. Check with shoot team when you scan them.
               </p>
             </div>
           )}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-3 text-sm">
-              <span className="inline-flex rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">{sessionType}</span>
-              <span className="text-slate-500">Session active</span>
-            </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={scanInput}
-                  onChange={onScanInput}
-                  onKeyDown={onScanKeyDown}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    toast("Use scanner only; typing and paste are not allowed.", { variant: "error" });
-                  }}
-                  onCopy={(e) => e.preventDefault()}
-                  placeholder="Scan 10-digit serial (scanner only)"
-                  autoComplete="off"
-                  autoFocus
-                  className="flex-1 rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddScan}
-                  disabled={pending || !scanInput.trim() || !SERIAL_DIGITS_ONLY.test(scanInput.trim())}
-                  className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
+
+          {/* Scanning card: dark panel only (session type was selected outside) */}
+          <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-700">
+            <div
+              className="relative min-h-[320px] bg-[#1e293b] dark:bg-[#0f172a]"
+            style={{
+              backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0)",
+              backgroundSize: "20px 20px",
+            }}
+          >
+            <div className="flex min-h-[320px] flex-col p-8">
+              <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+                {/* Scanner target: solid dark circle + lighter corner brackets */}
+                <div
+                  className="flex h-28 w-28 items-center justify-center rounded-full shadow-lg"
+                  style={{ backgroundColor: "#3730a3" }}
+                  aria-hidden
                 >
-                  Add
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">or</span>
+                  <svg className="h-14 w-14" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M0 8 L0 0 L8 0" />
+                    <path d="M16 0 L24 0 L24 8" />
+                    <path d="M0 16 L0 24 L8 24" />
+                    <path d="M16 24 L24 24 L24 16" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Ready to scan</p>
+                  <p className="mt-1.5 text-sm text-slate-400">
+                    Use the barcode scanner for input below.
+                  </p>
+                </div>
+                {/* Manual input: light grey field + purple ENTER */}
+                <div className="flex w-full max-w-md flex-col gap-3 sm:flex-row sm:items-stretch">
+                  <div className="relative flex-1">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-slate-500">
+                      <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      value={scanInput}
+                      onChange={onScanInput}
+                      onKeyDown={onScanKeyDown}
+                      onPaste={(e) => { e.preventDefault(); toast("Use scanner only; typing and paste are not allowed.", { variant: "error" }); }}
+                      onCopy={(e) => e.preventDefault()}
+                      placeholder="1000100575"
+                      autoComplete="off"
+                      autoFocus
+                      className="w-full rounded-lg border border-slate-400/50 bg-slate-200/90 py-3 pl-12 pr-3 text-sm text-slate-900 placeholder-slate-500 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 dark:bg-slate-300/90 dark:text-slate-900 dark:placeholder-slate-600"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddScan}
+                    disabled={pending || !scanInput.trim() || !SERIAL_DIGITS_ONLY.test(scanInput.trim())}
+                    className="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                  >
+                    ENTER
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => setCameraOpen(true)}
                   disabled={pending}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60"
+                  className="text-sm text-slate-400 hover:text-white"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                    <circle cx="12" cy="13" r="3" />
-                  </svg>
-                  Scan with camera
+                  Or scan with camera
                 </button>
               </div>
+              {/* Camera status bottom-left only */}
+              <div className="mt-6 flex items-center justify-between">
+                <span className="text-xs font-medium uppercase tracking-wider text-white/80">
+                  Camera: {cameraOpen ? "Active" : "Ready"}
+                </span>
+                {message && <span className="text-sm text-amber-400">{message}</span>}
+              </div>
             </div>
-            {message && <p className="mt-3 text-sm text-amber-600">{message}</p>}
+            </div>
           </div>
 
           <Dialog.Root open={cameraOpen} onOpenChange={setCameraOpen}>
@@ -331,54 +420,127 @@ export function ScanSessionUI({ taskId, userRole, defaultSessionType, nonReturna
             </Dialog.Portal>
           </Dialog.Root>
 
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-              <h3 className="text-sm font-semibold text-slate-900">
-                Scanned items ({items.length})
-              </h3>
-              <div className="flex items-center gap-3 text-xs">
-                {okCount > 0 && <span className="text-emerald-600">{okCount} OK</span>}
-                {errCount > 0 && <span className="text-red-600">{errCount} errors</span>}
+          {/* Scanned items + Session summary: table left, summary right */}
+          <div className="grid gap-6 lg:grid-cols-[1fr,280px]">
+            <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  Scanned Items ({items.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setCancelDialogOpen(true)}
+                  className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
+                >
+                  Clear list
+                </button>
+              </div>
+              {items.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
+                  No items scanned yet. Use the scanner above or enter a serial and press ENTER.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-100 text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                        <th className="px-4 py-3">Serial no.</th>
+                        <th className="px-4 py-3">Product</th>
+                        <th className="px-4 py-3">Time</th>
+                        <th className="px-4 py-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, idx) => (
+                        <tr
+                          key={idx}
+                          className={`border-b border-slate-100 last:border-0 dark:border-slate-800 ${
+                            sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId)
+                              ? "bg-amber-50/50 dark:bg-amber-900/10"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                          }`}
+                        >
+                          <td className="px-4 py-2.5 font-mono text-sm">
+                            <span className={item.scanStatus === "ERROR" ? "text-red-600 dark:text-red-400" : "text-indigo-600 dark:text-indigo-400"}>
+                              #{item.serialId}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">—</td>
+                          <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">
+                            {formatScannedTime(item.scannedAt)}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            {item.scanStatus === "ERROR" ? (
+                              <span className="font-medium text-red-600 dark:text-red-400">Unrecognized</span>
+                            ) : (
+                              <span className="font-medium text-emerald-600 dark:text-emerald-400">Verified</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Session summary + Finish CTA */}
+            <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Session Summary</h3>
+              <dl className="mt-4 space-y-4">
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Scanned</dt>
+                  <dd className="mt-0.5 text-xl font-semibold text-slate-900 dark:text-slate-100">{items.length} items</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Accuracy</dt>
+                  <dd className="mt-1 flex items-center gap-3">
+                    {items.length > 0 ? (
+                      <>
+                        <span className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                          {Math.round((okCount / items.length) * 100)}%
+                        </span>
+                        <div className="h-2.5 flex-1 min-w-0 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                          <div
+                            className="h-full rounded-full bg-indigo-600 dark:bg-indigo-500"
+                            style={{ width: `${(okCount / items.length) * 100}%` }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              {items.length > 0 && (
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  {okCount === items.length
+                    ? "All items verified. Finish the session when done."
+                    : `${errCount} unrecognized. Check and rescan if needed.`}
+                </p>
+              )}
+              <div className="mt-6 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleCommit}
+                  disabled={pending || items.length === 0}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {pending ? "Committing…" : "Finish Session"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCancelDialogOpen(true)}
+                  className="text-center text-sm text-slate-500 hover:text-slate-700 hover:underline dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  Cancel session
+                </button>
               </div>
             </div>
-            {items.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-slate-400">No items scanned yet. Use the barcode scanner above.</p>
-            ) : (
-              <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
-                {items.map((item, idx) => (
-                  <li key={idx} className={`flex flex-wrap items-center gap-3 px-5 py-2.5 ${sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId) ? "bg-amber-50 dark:bg-amber-900/20" : ""}`}>
-                    <span className={`inline-flex h-2 w-2 rounded-full ${item.scanStatus === "ERROR" ? "bg-red-500" : "bg-emerald-500"}`} />
-                    <span className="font-mono text-xs text-slate-700">{item.serialId}</span>
-                    {sessionType === "RETURN_VERIFY" && nonReturnableSet.has(item.serialId) && item.scanStatus !== "ERROR" && (
-                      <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-800 dark:text-amber-100">
-                        Non-returnable — check with shoot team
-                      </span>
-                    )}
-                    {item.scanStatus === "ERROR" && item.errorReason && (
-                      <span className="text-xs text-red-600">{item.errorReason}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleCommit}
-              disabled={pending || items.length === 0}
-              className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
-            >
-              {pending ? "Committing..." : "Commit session"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setCancelDialogOpen(true)}
-              className="rounded-lg border border-slate-300 bg-white px-6 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Cancel session
-            </button>
           </div>
 
           <ConfirmDialog

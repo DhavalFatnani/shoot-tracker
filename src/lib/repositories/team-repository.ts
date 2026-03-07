@@ -86,3 +86,25 @@ export async function setUserTeams(tx: Tx, userId: string, teamIds: string[]) {
     await tx.insert(teamMembers).values({ teamId, userId }).onConflictDoNothing();
   }
 }
+
+/** Batch: for each userId return list of team names (for admin user list). */
+export async function getTeamNamesByUserIds(
+  db: Database | Tx,
+  userIds: string[]
+): Promise<Record<string, string[]>> {
+  if (userIds.length === 0) return {};
+  const members = await db
+    .select({ userId: teamMembers.userId, teamId: teamMembers.teamId })
+    .from(teamMembers)
+    .where(inArray(teamMembers.userId, userIds));
+  const teamIds = [...new Set(members.map((m) => m.teamId))];
+  const teamRows = teamIds.length > 0 ? await db.select().from(teams).where(inArray(teams.id, teamIds)) : [];
+  const teamNameMap = new Map(teamRows.map((t) => [t.id, t.name]));
+  const result: Record<string, string[]> = {};
+  for (const uid of userIds) result[uid] = [];
+  for (const m of members) {
+    const name = teamNameMap.get(m.teamId);
+    if (name) result[m.userId].push(name);
+  }
+  return result;
+}

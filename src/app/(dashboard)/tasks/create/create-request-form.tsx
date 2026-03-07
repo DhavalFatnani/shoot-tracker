@@ -112,20 +112,24 @@ export function CreateRequestForm({
       formData.set("shootTeamId", adminShootTeamId);
     }
     startTransition(async () => {
-      const result = await createRequest(formData);
-      if (result.success && result.data) {
-        const skipped = (result.data as { skipped?: string[] }).skipped ?? [];
-        if (skipped.length > 0) {
-          const skippedWithSku = skipped.map((id) => {
-            const row = rows.find((r) => r.serial_id === id);
-            return row ? `${id} (${row.sku})` : id;
-          });
-          setError(`Request created. Some serials were skipped (not eligible): ${skippedWithSku.join(", ")}`);
+      try {
+        const result = await createRequest(formData);
+        if (result.success && result.data) {
+          const skipped = (result.data as { skipped?: string[] }).skipped ?? [];
+          if (skipped.length > 0) {
+            const skippedWithSku = skipped.map((id) => {
+              const row = rows.find((r) => r.serial_id === id);
+              return row ? `${id} (${row.sku})` : id;
+            });
+            setError(`Request created. Some serials were skipped (not eligible): ${skippedWithSku.join(", ")}`);
+          }
+          router.push(`/tasks/${result.data.taskId}`);
+          router.refresh();
+        } else {
+          setError(result.error ?? "Failed");
         }
-        router.push(`/tasks/${result.data.taskId}`);
-        router.refresh();
-      } else {
-        setError(result.error ?? "Failed");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
       }
     });
   }
@@ -148,8 +152,8 @@ export function CreateRequestForm({
   return (
     <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
       {/* Shoot reason */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-semibold text-slate-900">Reason for shoot</p>
+      <div className="section-card p-5">
+        <p className="label">Reason for shoot</p>
         <div className="mt-3 flex flex-wrap gap-3">
           {SHOOT_REASONS.map((r) => (
             <label
@@ -175,9 +179,9 @@ export function CreateRequestForm({
       </div>
 
       {/* Input mode selector */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-semibold text-slate-900">Input format</p>
-        <p className="mt-1 text-xs leading-relaxed text-slate-500">
+      <div className="section-card p-5">
+        <p className="label">Input format</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
           CSV: Clothing, Size, Bin Location, SKU Code. Serial number is read from Bin Location (e.g. &quot;A32-S4-B1 • SN: 0000043569 • Store: 230&quot;). SKU and Serial Number mapping is kept in all outputs.
         </p>
         <div className="mt-4 flex gap-4">
@@ -255,40 +259,29 @@ export function CreateRequestForm({
 
       {/* Serial preview with return toggle */}
       {currentRows.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/75 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-700">
-              Serial Number ↔ SKU ({currentRows.length} units)
-            </p>
-            <p className="text-xs text-slate-500">
-              {nonReturnIds.size > 0
-                ? `${currentRows.length - nonReturnIds.size} returnable · ${nonReturnIds.size} non-returnable`
-                : "All marked as returnable"}
-            </p>
-          </div>
-          <div className="max-h-72 overflow-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 border-b border-slate-100 bg-slate-50/75">
-                <tr>
-                  <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Serial</th>
-                  <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">SKU</th>
-                  <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Return</th>
-                  <th className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Non-return reason</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+        <div className="table-wrapper max-h-72 overflow-auto">
+          <table className="table table-sticky table-row-hover w-full text-left text-sm">
+            <thead>
+              <tr>
+                <th className="table-th">Serial</th>
+                <th className="table-th">SKU</th>
+                <th className="table-th text-center">Return</th>
+                <th className="table-th">Non-return reason</th>
+              </tr>
+            </thead>
+            <tbody>
                 {currentRows.slice(0, 100).map((r) => {
                   const isNonReturn = nonReturnIds.has(r.serial_id);
                   return (
-                    <tr key={r.serial_id} className={`transition-colors ${isNonReturn ? "bg-amber-50/50" : "hover:bg-slate-50/50"}`}>
-                      <td className="px-4 py-2 font-mono text-xs text-slate-700">{r.serial_id}</td>
-                      <td className="px-4 py-2 text-slate-600">{r.sku}</td>
-                      <td className="px-4 py-2 text-center">
+                    <tr key={r.serial_id} className={isNonReturn ? "bg-amber-50/50 dark:bg-amber-900/10" : ""}>
+                      <td className="table-td font-mono text-xs">{r.serial_id}</td>
+                      <td className="table-td">{r.sku}</td>
+                      <td className="table-td text-center">
                         <button
                           type="button"
                           onClick={() => toggleNonReturn(r.serial_id)}
                           className={`inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                            !isNonReturn ? "bg-emerald-500" : "bg-slate-300"
+                            !isNonReturn ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
                           }`}
                         >
                           <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
@@ -296,14 +289,14 @@ export function CreateRequestForm({
                           }`} />
                         </button>
                       </td>
-                      <td className="px-4 py-2">
+                      <td className="table-td">
                         {isNonReturn && (
                           <input
                             type="text"
                             value={nonReturnReasons[r.serial_id] ?? ""}
                             onChange={(e) => setNonReturnReasons((prev) => ({ ...prev, [r.serial_id]: e.target.value }))}
                             placeholder="e.g. Gifted to influencer"
-                            className="w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700 placeholder-slate-400 focus:border-indigo-300 focus:outline-none focus:ring-1 focus:ring-indigo-100"
+                            className="input w-full px-2.5 py-1 text-xs"
                           />
                         )}
                       </td>
@@ -313,9 +306,8 @@ export function CreateRequestForm({
               </tbody>
             </table>
             {currentRows.length > 100 && (
-              <p className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500">… and {currentRows.length - 100} more</p>
+              <p className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">… and {currentRows.length - 100} more</p>
             )}
-          </div>
         </div>
       )}
 
@@ -365,11 +357,12 @@ export function CreateRequestForm({
       )}
 
       {/* Submit */}
-      <button
-        type="submit"
-        disabled={pending || !canSubmit}
-        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-      >
+      <div className="form-actions">
+        <button
+          type="submit"
+          disabled={pending || !canSubmit}
+          className="btn btn-primary"
+        >
         {pending ? (
           <>
             <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -381,7 +374,8 @@ export function CreateRequestForm({
         ) : (
           "Create request"
         )}
-      </button>
+        </button>
+      </div>
     </form>
   );
 }

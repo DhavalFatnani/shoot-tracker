@@ -38,7 +38,7 @@ export default async function DashboardLayout({
     "use server";
     const supabase = await createClient();
     await supabase.auth.signOut();
-    redirect("/");
+    // No redirect here — client handles navigation to avoid aborted-request rejection overlay
   }
 
   return (
@@ -49,10 +49,10 @@ export default async function DashboardLayout({
       >
         Skip to main content
       </a>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen" style={{ backgroundColor: "var(--color-surface)" }}>
         <Sidebar session={session} signOut={signOut} />
         <main id="main-content" className="pt-14 lg:pl-64 lg:pt-0" tabIndex={-1}>
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="page-container">
             {children}
           </div>
         </main>

@@ -16,9 +16,9 @@ export default async function CreateReturnPage({
   if (session.role === "OPS_USER") {
     return (
       <div className="space-y-6">
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
-          <h2 className="text-lg font-semibold text-amber-800">Access restricted</h2>
-          <p className="mt-1 text-sm text-amber-700">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
+          <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200">Access restricted</h2>
+          <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
             Only shoot team members and admins can create returns. OPS users perform return verification from the task detail page.
           </p>
         </div>
@@ -38,8 +38,8 @@ export default async function CreateReturnPage({
     <div className="space-y-6">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { href: "/returns", label: "Returns" }, { label: "Create return" }]} />
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Create Return</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Create Return</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {taskId
             ? "Serials received for this task. Scan items to return to the warehouse."
             : "View serials currently with the shoot team and scan items to return to the warehouse."}
@@ -47,11 +47,11 @@ export default async function CreateReturnPage({
       </div>
 
       {fetchError ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm font-medium text-red-700">{fetchError}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm font-medium text-red-700 dark:text-red-300">{fetchError}</p>
         </div>
       ) : (
-        <CreateReturnUI initialInventory={inventory} />
+        <CreateReturnUI initialInventory={inventory} taskId={taskId ?? null} />
       )}
     </div>
   );

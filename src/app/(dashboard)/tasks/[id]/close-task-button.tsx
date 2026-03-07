@@ -14,12 +14,16 @@ export function CloseTaskButton({ taskId, disabled }: { taskId: string; disabled
     const formData = new FormData();
     formData.set("taskId", taskId);
     startTransition(async () => {
-      const result = await closeTask(formData);
-      if (result.success) {
-        toast("Task closed", { variant: "success" });
-        router.refresh();
-      } else {
-        toast(result.error ?? "Failed to close task", { variant: "error" });
+      try {
+        const result = await closeTask(formData);
+        if (result.success) {
+          toast("Task closed", { variant: "success" });
+          router.refresh();
+        } else {
+          toast(result.error ?? "Failed to close task", { variant: "error" });
+        }
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Something went wrong.", { variant: "error" });
       }
     });
   }
@@ -29,7 +33,7 @@ export function CloseTaskButton({ taskId, disabled }: { taskId: string; disabled
       type="button"
       onClick={handleClose}
       disabled={disabled || pending}
-      className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      className="btn btn-danger"
     >
       {pending ? (
         <>
@@ -40,7 +44,12 @@ export function CloseTaskButton({ taskId, disabled }: { taskId: string; disabled
           Closing…
         </>
       ) : (
-        "Close task"
+        <>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+          Close Task
+        </>
       )}
     </button>
   );

@@ -1,4 +1,4 @@
-import { eq, and, inArray, sql } from "drizzle-orm";
+import { eq, and, inArray, sql, desc } from "drizzle-orm";
 import type { Database, Tx } from "@/lib/db/client";
 import { disputes } from "@/lib/db/schema";
 
@@ -17,6 +17,21 @@ export function disputesByTaskIds(db: Database | Tx, taskIds: string[]) {
   return db.select().from(disputes).where(inArray(disputes.taskId, taskIds));
 }
 
+/** Recent disputes across given task IDs, ordered by createdAt desc (for dashboard activity). */
+export async function listRecentDisputes(
+  db: Database | Tx,
+  options: { taskIds: string[]; limit: number }
+) {
+  const { taskIds, limit } = options;
+  if (taskIds.length === 0) return [];
+  return db
+    .select()
+    .from(disputes)
+    .where(inArray(disputes.taskId, taskIds))
+    .orderBy(desc(disputes.createdAt))
+    .limit(limit);
+}
+
 export function openDisputesByTaskId(db: Database | Tx, taskId: string) {
   return db.select().from(disputes).where(and(eq(disputes.taskId, taskId), eq(disputes.status, "OPEN")));
 }
@@ -32,7 +47,7 @@ export async function countOpenDisputesForTaskIds(db: Database | Tx, taskIds: st
 
 export async function createDispute(
   tx: Tx,
-  row: { taskId: string; serialId: string; disputeType: string; description?: string }
+  row: { taskId: string; serialId: string; disputeType: string; description?: string; raisedBy?: string }
 ) {
   const [d] = await tx.insert(disputes).values({ ...row, status: "OPEN" }).returning({ id: disputes.id });
   return d!.id;

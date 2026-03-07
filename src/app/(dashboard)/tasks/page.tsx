@@ -48,23 +48,19 @@ export default async function TasksPage({
     return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Tasks" }]} />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Tasks</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
-            {q ? " matching search" : ""}
+          <h1 className="page-title">Tasks</h1>
+          <p className="page-subtitle mt-1">
+            Manage and track inventory movement sessions.
           </p>
         </div>
         {session.role !== "OPS_USER" && (
-          <Link
-            href="/tasks/create"
-            className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition duration-200 hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-950"
-          >
+          <Link href="/tasks/create" className="btn btn-primary">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-            Create request
+            Create Request
           </Link>
         )}
       </div>
@@ -73,9 +69,13 @@ export default async function TasksPage({
 
       <TasksTableWithSelection tasks={tasks} receivedTaskIds={receivedTaskIds} hasFilters={!!(q || status)} />
 
-      {(page > 1 || hasNext) && (
-        <nav className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-700" aria-label="Pagination">
-          <div>
+      <nav className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-4 dark:border-slate-700" aria-label="Pagination">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Showing {(page - 1) * PAGE_SIZE + 1}–{(page - 1) * PAGE_SIZE + tasks.length}
+          {!hasNext && page === 1 && tasks.length > 0 && ` of ${tasks.length} task${tasks.length !== 1 ? "s" : ""}`}
+        </p>
+        {(page > 1 || hasNext) && (
+          <div className="flex items-center gap-1">
             {page > 1 ? (
               <Link
                 href={`/tasks?${new URLSearchParams({
@@ -83,16 +83,28 @@ export default async function TasksPage({
                   ...(q && { q }),
                   page: String(page - 1),
                 }).toString()}`}
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="btn btn-secondary rounded-lg px-3 py-2 text-sm"
               >
-                ← Previous
+                Previous
               </Link>
             ) : (
-              <span className="text-sm text-zinc-400 dark:text-zinc-500">Previous</span>
+              <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">Previous</span>
             )}
-          </div>
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">Page {page}</div>
-          <div>
+            <span className={`rounded-lg px-3 py-2 text-sm font-medium ${page === 1 ? "bg-indigo-600 text-white dark:bg-indigo-500" : "border border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"}`}>
+              {page}
+            </span>
+            {hasNext && (
+              <Link
+                href={`/tasks?${new URLSearchParams({
+                  ...(status && { status }),
+                  ...(q && { q }),
+                  page: String(page + 1),
+                }).toString()}`}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              >
+                {page + 1}
+              </Link>
+            )}
             {hasNext ? (
               <Link
                 href={`/tasks?${new URLSearchParams({
@@ -100,28 +112,28 @@ export default async function TasksPage({
                   ...(q && { q }),
                   page: String(page + 1),
                 }).toString()}`}
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="btn btn-secondary rounded-lg px-3 py-2 text-sm"
               >
-                Next →
+                Next
               </Link>
             ) : (
-              <span className="text-sm text-zinc-400 dark:text-zinc-500">Next</span>
+              <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500">Next</span>
             )}
           </div>
-        </nav>
-      )}
+        )}
+      </nav>
     </div>
     );
   } catch (e) {
     console.error("Tasks page error:", e);
     return (
       <div className="space-y-6">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20">
+        <div className="card rounded-xl border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-900/20">
           <h1 className="text-lg font-semibold text-red-800 dark:text-red-200">Something went wrong</h1>
           <p className="mt-1 text-sm text-red-700 dark:text-red-300">
             We couldn’t load the tasks list. Please try again.
           </p>
-          <a href="/tasks" className="mt-4 inline-block text-sm font-medium text-red-600 hover:underline dark:text-red-400">
+          <a href="/tasks" className="mt-4 inline-block text-sm font-semibold text-red-600 hover:underline dark:text-red-400">
             Reload tasks
           </a>
         </div>

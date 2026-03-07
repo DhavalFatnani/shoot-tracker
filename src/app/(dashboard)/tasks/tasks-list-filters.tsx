@@ -2,7 +2,8 @@
 
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { FilterBar } from "@/components/ui/filter-bar";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
 
 type StatusOption = { value: string; label: string };
 
@@ -49,73 +50,54 @@ export function TasksListFilters({
     });
   }
 
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Status</p>
-          <div className="flex flex-wrap gap-2">
-            {statusOptions.map((opt) => {
-              const href = `/tasks?${buildQuery({ status: opt.value, page: 1 })}`;
-              const active = status === opt.value;
-              return (
-                <Link
-                  key={opt.value || "all"}
-                  href={href}
-                  prefetch={true}
-                  className={`inline-flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    active
-                      ? "bg-teal-600 text-white shadow-sm dark:bg-teal-500"
-                      : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
-                  }`}
-                >
-                  {opt.label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+  const tabItems: TabItem[] = statusOptions.map((opt) => ({
+    href: `/tasks?${buildQuery({ status: opt.value, page: 1 })}`,
+    label: opt.label,
+  }));
+  const currentHref = `/tasks?${buildQuery({ status, page: 1 })}`;
 
-        <form method="get" action="/tasks" className="flex shrink-0 gap-2 sm:items-end" onSubmit={handleSearch}>
-          <input type="hidden" name="status" value={status} />
-          <div className="relative flex-1 sm:w-64">
-            <label htmlFor="tasks-search" className="sr-only">
-              Search tasks
-            </label>
-            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-zinc-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
-              </svg>
-            </span>
-            <input
-              id="tasks-search"
-              type="search"
-              name="q"
-              defaultValue={q}
-              placeholder="Task name or serial…"
-              disabled={isPending}
-              className="w-full rounded-lg border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 placeholder-zinc-500 transition focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-400"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isPending}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60 dark:focus:ring-offset-zinc-800"
-          >
-            {isPending ? (
-              <>
-                <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Searching…
-              </>
-            ) : (
-              "Search"
-            )}
-          </button>
-        </form>
+  return (
+    <FilterBar>
+      <div className="min-w-0 flex-1">
+        <Tabs items={tabItems} currentHref={currentHref} />
       </div>
-    </div>
+      <form method="get" action="/tasks" className="flex min-w-0 flex-1 max-w-md shrink-0 gap-2 sm:items-center" onSubmit={handleSearch}>
+        <input type="hidden" name="status" value={status} />
+        <div className="relative flex-1">
+          <label htmlFor="tasks-search" className="sr-only">
+            Search tasks
+          </label>
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-slate-400 dark:text-slate-500" aria-hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+            </svg>
+          </span>
+          <input
+            id="tasks-search"
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Search task name, serial, or assignee..."
+            disabled={isPending}
+            autoComplete="off"
+            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-12 pr-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+            aria-label="Search tasks"
+          />
+        </div>
+        <button type="submit" disabled={isPending} className="btn btn-primary shrink-0">
+          {isPending ? (
+            <>
+              <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Searching…
+            </>
+          ) : (
+            "Search"
+          )}
+        </button>
+      </form>
+    </FilterBar>
   );
 }

@@ -2,7 +2,7 @@ import { getDb } from "@/lib/db/client";
 import * as eventRepo from "@/lib/repositories/event-repository";
 import * as taskRepo from "@/lib/repositories/task-repository";
 import * as sessionRepo from "@/lib/repositories/session-repository";
-import * as taskService from "@/lib/services/task-service";
+import * as profileRepo from "@/lib/repositories/profile-repository";
 import type { Role } from "@/lib/validations";
 
 /** Task-level timeline entry (Created, Picked, Dispatched, etc.). */
@@ -24,7 +24,10 @@ const SESSION_TYPE_LABELS: Record<string, string> = {
 /** Task lifecycle timeline: created, picked, dispatched, received, return scan/verify, closed. */
 export async function getTaskTimeline(taskId: string): Promise<TaskTimelineEntry[]> {
   const db = getDb();
-  const task = await taskRepo.taskById(db, taskId);
+  const [task, committed] = await Promise.all([
+    taskRepo.taskById(db, taskId),
+    sessionRepo.committedSessionsByTaskId(db, taskId),
+  ]);
   if (!task) return [];
 
   const entries: TaskTimelineEntry[] = [];
@@ -38,7 +41,6 @@ export async function getTaskTimeline(taskId: string): Promise<TaskTimelineEntry
     });
   }
 
-  const committed = await sessionRepo.committedSessionsByTaskId(db, taskId);
   for (const s of committed) {
     if (s.committedAt) {
       const label = SESSION_TYPE_LABELS[s.type] ?? s.type;
@@ -109,6 +111,7 @@ export type ActivityLogRow = {
   fromLocation: string;
   toLocation: string;
   createdBy: string;
+  actorDisplayName: string;
   createdAt: Date;
 };
 
@@ -122,13 +125,13 @@ export async function getActivityLogs(
   const limit = Math.min(100, Math.max(1, options.limit ?? 30));
   const offset = Math.max(0, options.offset ?? 0);
 
-  const { tasks: visibleTasks } = await taskService.listTasks(
-    "",
-    userRole,
+  const visibleTasks = await taskRepo.listTasks(db, {
+    isAdmin: userRole === "ADMIN",
     shootTeamIds,
     opsWarehouseIds,
-    { limit: 2000, offset: 0 }
-  );
+    limit: 500,
+    offset: 0,
+  });
   const taskIds = visibleTasks.map((t) => t.id);
   if (taskIds.length === 0) return [];
 
@@ -136,7 +139,11 @@ export async function getActivityLogs(
   if (eventRows.length === 0) return [];
 
   const uniqueTaskIds = [...new Set(eventRows.map((e) => e.taskId).filter(Boolean))] as string[];
-  const taskRows = await Promise.all(uniqueTaskIds.map((id) => taskRepo.taskById(db, id)));
+  const createdByIds = [...new Set(eventRows.map((e) => e.createdBy))];
+  const [taskRows, actorNames] = await Promise.all([
+    taskRepo.tasksByIds(db, uniqueTaskIds),
+    profileRepo.getDisplayNamesByIds(db, createdByIds),
+  ]);
   const taskMap = new Map(uniqueTaskIds.map((id, i) => [id, taskRows[i]]));
 
   return eventRows.map((e) => {
@@ -151,6 +158,7 @@ export async function getActivityLogs(
       fromLocation: e.fromLocation,
       toLocation: e.toLocation,
       createdBy: e.createdBy,
+      actorDisplayName: actorNames.get(e.createdBy) ?? "—",
       createdAt: e.createdAt,
     };
   });

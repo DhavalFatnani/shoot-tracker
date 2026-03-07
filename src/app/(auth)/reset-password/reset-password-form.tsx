@@ -50,23 +50,20 @@ export function ResetPasswordForm() {
   }
 
   if (hasRecovery === null) {
-    return <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>;
+    return <p className="text-sm text-slate-500 dark:text-slate-400">Loading…</p>;
   }
 
   if (hasRecovery === false) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           This link is invalid or has expired. Request a new password reset from the sign-in page.
         </p>
-        <Link
-          href="/forgot-password"
-          className="inline-block rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white transition duration-200 hover:bg-teal-500"
-        >
+        <Link href="/forgot-password" className="btn-primary">
           Reset password
         </Link>
-        <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-          <Link href="/sign-in" className="font-medium text-teal-600 transition duration-200 hover:text-teal-500 dark:text-teal-400">
+        <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+          <Link href="/sign-in" className="font-medium text-indigo-600 transition duration-200 hover:text-indigo-500 dark:text-indigo-400">
             Back to sign in
           </Link>
         </p>
@@ -76,8 +73,8 @@ export function ResetPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div>
-        <label htmlFor="reset-password" className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+      <div className="form-group">
+        <label htmlFor="reset-password" className="label">
           New password
         </label>
         <div className="relative">
@@ -90,12 +87,12 @@ export function ResetPasswordForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 pr-10 text-zinc-900 placeholder-zinc-400 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+            className="input pr-10"
           />
           <button
             type="button"
             onClick={() => setShowPassword((p) => !p)}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+            className="btn-ghost absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? (
@@ -111,10 +108,8 @@ export function ResetPasswordForm() {
           </button>
         </div>
       </div>
-      <div>
-        <label htmlFor="reset-confirm" className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          Confirm password
-        </label>
+      <div className="form-group">
+        <label htmlFor="reset-confirm" className="label">Confirm password</label>
         <input
           id="reset-confirm"
           type={showPassword ? "text" : "password"}
@@ -124,7 +119,7 @@ export function ResetPasswordForm() {
           onChange={(e) => setConfirm(e.target.value)}
           required
           minLength={6}
-          className="w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-zinc-900 placeholder-zinc-400 transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+          className="input"
         />
       </div>
       {error && (
@@ -132,15 +127,11 @@ export function ResetPasswordForm() {
           {error}
         </div>
       )}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-lg bg-teal-600 px-4 py-3 font-medium text-white transition duration-200 hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60 dark:focus:ring-offset-zinc-900"
-      >
+      <button type="submit" disabled={loading} className="btn-primary w-full py-3">
         {loading ? "Updating…" : "Set new password"}
       </button>
-      <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-        <Link href="/sign-in" className="font-medium text-teal-600 transition duration-200 hover:text-teal-500 dark:text-teal-400">
+      <p className="text-center text-sm text-slate-500 dark:text-slate-400">
+        <Link href="/sign-in" className="font-medium text-indigo-600 transition duration-200 hover:text-indigo-500 dark:text-indigo-400">
           Back to sign in
         </Link>
       </p>

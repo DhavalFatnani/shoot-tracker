@@ -13,6 +13,18 @@ export async function upsertLocation(tx: Tx, serialId: string, location: Locatio
     });
 }
 
+export async function upsertLocations(tx: Tx, serialIds: string[], location: Location) {
+  if (serialIds.length === 0) return;
+  const now = new Date();
+  await tx
+    .insert(serialCurrentState)
+    .values(serialIds.map((serialId) => ({ serialId, currentLocation: location, updatedAt: now })))
+    .onConflictDoUpdate({
+      target: serialCurrentState.serialId,
+      set: { currentLocation: location, updatedAt: now },
+    });
+}
+
 export async function getLocation(db: Database | Tx, serialId: string) {
   const rows = await db.select({ currentLocation: serialCurrentState.currentLocation }).from(serialCurrentState).where(eq(serialCurrentState.serialId, serialId)).limit(1);
   return rows[0] ?? null;

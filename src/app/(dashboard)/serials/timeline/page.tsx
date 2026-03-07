@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/get-session";
 import { SerialTimelineForm } from "./serial-timeline-form";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 
 export default async function SerialTimelinePage() {
   const session = await getSession();
@@ -8,10 +9,11 @@ export default async function SerialTimelinePage() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Serials Timeline" }]} />
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Serial timeline</h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Enter a serial ID to view its full event history and audit trail.
+        <h1 className="page-title">Serials Timeline</h1>
+        <p className="page-subtitle mt-1">
+          Audit lifecycle and trace event history for specific serialized items.
         </p>
       </div>
       <SerialTimelineForm canRaiseDispute={canRaiseDispute} />

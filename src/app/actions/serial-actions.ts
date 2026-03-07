@@ -71,8 +71,8 @@ export async function getSerialTimeline(serialId: string) {
   if (!session) return { success: false, error: "Unauthorized" };
 
   try {
-    const { events, serialId: sid, sku } = await serialTimelineService.getSerialTimeline(serialId);
-    return { success: true, data: { events, serialId: sid, sku } };
+    const { events, serialId: sid, sku, currentLocation } = await serialTimelineService.getSerialTimeline(serialId);
+    return { success: true, data: { events, serialId: sid, sku, currentLocation } };
   } catch (e) {
     if (e instanceof ValidationError) return { success: false, error: e.message };
     return { success: false, error: mapError(e) };

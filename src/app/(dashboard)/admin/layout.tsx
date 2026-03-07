@@ -22,11 +22,11 @@ export default async function AdminLayout({
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Admin" }]} />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">Admin</h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Manage users, teams, and warehouses.
+          <h1 className="page-title">Admin Console</h1>
+          <p className="page-subtitle mt-1">
+            Global management and system configuration.
           </p>
         </div>
       </div>

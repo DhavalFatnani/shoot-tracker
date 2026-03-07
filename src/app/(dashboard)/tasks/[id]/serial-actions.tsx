@@ -70,7 +70,7 @@ export function SerialActions({ taskId, taskSerials, userRole, taskStatus }: Ser
           <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
             {counts.pendingAction} pending action
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-teal-100 px-2.5 py-0.5 font-medium text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
+          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
             {counts.packed} packed
           </span>
           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 font-medium text-emerald-700">
@@ -89,7 +89,7 @@ export function SerialActions({ taskId, taskSerials, userRole, taskStatus }: Ser
             <button
               onClick={() => setDispatchDialogOpen(true)}
               disabled={dispatchLoading}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-zinc-800"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-slate-800"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
@@ -155,12 +155,16 @@ export function SerialRowActions({
   const handleRevert = () => {
     setError(null);
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      fd.set("serialId", serial.serialId);
-      const res = await adminRevertSerial(fd);
-      if (res.success) { router.refresh(); }
-      else { setError(res.error ?? "Failed to revert"); }
+      try {
+        const fd = new FormData();
+        fd.set("taskId", taskId);
+        fd.set("serialId", serial.serialId);
+        const res = await adminRevertSerial(fd);
+        if (res.success) { router.refresh(); }
+        else { setError(res.error ?? "Failed to revert"); }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
+      }
     });
   };
 
@@ -171,18 +175,22 @@ export function SerialRowActions({
     }
     setError(null);
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      fd.set("serialId", serial.serialId);
-      fd.set("disputeType", disputeType);
-      fd.set("description", disputeDescription);
-      const res = await raiseDispute(fd);
-      if (res.success) {
-        setActiveAction("none");
-        setDisputeDescription("");
-        router.refresh();
-      } else {
-        setError(res.error ?? "Failed to create dispute");
+      try {
+        const fd = new FormData();
+        fd.set("taskId", taskId);
+        fd.set("serialId", serial.serialId);
+        fd.set("disputeType", disputeType);
+        fd.set("description", disputeDescription);
+        const res = await raiseDispute(fd);
+        if (res.success) {
+          setActiveAction("none");
+          setDisputeDescription("");
+          router.refresh();
+        } else {
+          setError(res.error ?? "Failed to create dispute");
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
       }
     });
   };
@@ -207,7 +215,7 @@ export function SerialRowActions({
             <select
               value={disputeType}
               onChange={(e) => setDisputeType(e.target.value)}
-              className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+              className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
             >
               <option value="DAMAGED">Damaged / QC issue</option>
               <option value="WRONG_ITEM">Wrong item</option>
@@ -220,7 +228,7 @@ export function SerialRowActions({
               value={disputeDescription}
               onChange={(e) => setDisputeDescription(e.target.value)}
               rows={2}
-              className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+              className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -229,7 +237,7 @@ export function SerialRowActions({
               {pending ? "Creating..." : "Create dispute"}
             </button>
             <button onClick={() => { setActiveAction("none"); setError(null); }} disabled={pending}
-              className="rounded-md bg-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-500">
+              className="rounded-md bg-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500">
               Cancel
             </button>
           </div>
@@ -255,25 +263,33 @@ export function SerialRowActions({
     if (!orderId.trim()) { setError("Order ID is required"); return; }
     setError(null);
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      fd.set("serialId", serial.serialId);
-      fd.set("orderId", orderId);
-      const res = await markSerialSold(fd);
-      if (res.success) { setActiveAction("none"); router.refresh(); }
-      else { setError(res.error ?? "Failed"); }
+      try {
+        const fd = new FormData();
+        fd.set("taskId", taskId);
+        fd.set("serialId", serial.serialId);
+        fd.set("orderId", orderId);
+        const res = await markSerialSold(fd);
+        if (res.success) { setActiveAction("none"); router.refresh(); }
+        else { setError(res.error ?? "Failed"); }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
+      }
     });
   };
 
   const handleNotFound = () => {
     setError(null);
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      fd.set("serialId", serial.serialId);
-      const res = await markSerialNotFound(fd);
-      if (res.success) { router.refresh(); }
-      else { setError(res.error ?? "Failed"); }
+      try {
+        const fd = new FormData();
+        fd.set("taskId", taskId);
+        fd.set("serialId", serial.serialId);
+        const res = await markSerialNotFound(fd);
+        if (res.success) { router.refresh(); }
+        else { setError(res.error ?? "Failed"); }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
+      }
     });
   };
 
@@ -281,13 +297,17 @@ export function SerialRowActions({
     if (!qcReason.trim()) { setError("QC fail reason is required"); return; }
     setError(null);
     startTransition(async () => {
-      const fd = new FormData();
-      fd.set("taskId", taskId);
-      fd.set("serialId", serial.serialId);
-      fd.set("reason", qcReason);
-      const res = await markSerialQcFail(fd);
-      if (res.success) { setActiveAction("none"); router.refresh(); }
-      else { setError(res.error ?? "Failed"); }
+      try {
+        const fd = new FormData();
+        fd.set("taskId", taskId);
+        fd.set("serialId", serial.serialId);
+        fd.set("reason", qcReason);
+        const res = await markSerialQcFail(fd);
+        if (res.success) { setActiveAction("none"); router.refresh(); }
+        else { setError(res.error ?? "Failed"); }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Something went wrong.");
+      }
     });
   };
 
@@ -300,14 +320,14 @@ export function SerialRowActions({
             placeholder="Order ID"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            className="w-36 rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+            className="w-36 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
           />
           <button onClick={handleSold} disabled={pending}
             className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
             Confirm
           </button>
           <button onClick={() => { setActiveAction("none"); setError(null); }} disabled={pending}
-            className="rounded-md bg-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-500">
+            className="rounded-md bg-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500">
             Cancel
           </button>
         </div>
@@ -325,14 +345,14 @@ export function SerialRowActions({
             placeholder="QC fail reason"
             value={qcReason}
             onChange={(e) => setQcReason(e.target.value)}
-            className="w-36 rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+            className="w-36 rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
           />
           <button onClick={handleQcFail} disabled={pending}
             className="rounded-md bg-rose-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50">
             Confirm
           </button>
           <button onClick={() => { setActiveAction("none"); setError(null); }} disabled={pending}
-            className="rounded-md bg-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-500">
+            className="rounded-md bg-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500">
             Cancel
           </button>
         </div>
@@ -348,7 +368,7 @@ export function SerialRowActions({
           <select
             value={disputeType}
             onChange={(e) => setDisputeType(e.target.value)}
-            className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+            className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
           >
             <option value="DAMAGED">Damaged / QC issue</option>
             <option value="WRONG_ITEM">Wrong item</option>
@@ -361,7 +381,7 @@ export function SerialRowActions({
             value={disputeDescription}
             onChange={(e) => setDisputeDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs text-zinc-700 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
+            className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -375,7 +395,7 @@ export function SerialRowActions({
           <button
             onClick={() => { setActiveAction("none"); setError(null); }}
             disabled={pending}
-            className="rounded-md bg-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-500"
+            className="rounded-md bg-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-300 disabled:opacity-50 dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500"
           >
             Cancel
           </button>

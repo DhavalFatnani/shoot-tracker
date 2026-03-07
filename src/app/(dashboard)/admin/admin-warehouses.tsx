@@ -94,49 +94,42 @@ export function AdminWarehouses() {
     fetchWarehouses();
   }
 
-  const cardClass = "rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80";
-  const inputClass = "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
-  const labelClass = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400";
-  const btnPrimary = "rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-60 dark:focus:ring-offset-zinc-800";
-  const btnSecondary = "rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700";
-  const btnDanger = "rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-200 dark:hover:bg-red-900/50";
-
   return (
     <div className="space-y-6">
-      <div className={`${cardClass} p-6`}>
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">Create warehouse</h2>
+      <div className="section-card p-6">
+        <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-slate-100">Create warehouse</h2>
         <form onSubmit={handleCreate} className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="w-40">
-            <label className={labelClass}>Code</label>
+            <label className="label">Code</label>
             <input
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="e.g. WH1"
               required
-              className={inputClass}
+              className="input"
             />
           </div>
           <div className="flex-1 min-w-0">
-            <label className={labelClass}>Name</label>
+            <label className="label">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Warehouse name"
               required
-              className={inputClass}
+              className="input"
             />
           </div>
-          <button type="submit" disabled={creating} className={btnPrimary}>
+          <button type="submit" disabled={creating} className="btn btn-primary">
             {creating ? "Creating…" : "Create warehouse"}
           </button>
         </form>
       </div>
 
-      <div className={`overflow-hidden ${cardClass}`}>
-        <div className="border-b border-zinc-200 px-5 py-3 dark:border-zinc-600">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Warehouses ({warehouses.length})</h2>
+      <div className="section-card overflow-hidden">
+        <div className="border-b border-slate-200 px-5 py-3 dark:border-slate-600">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Warehouses ({warehouses.length})</h2>
         </div>
         {error && (
           <div className="mx-5 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
@@ -144,51 +137,52 @@ export function AdminWarehouses() {
           </div>
         )}
         {loading ? (
-          <p className="px-5 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">Loading…</p>
+          <p className="px-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">Loading…</p>
         ) : warehouses.length === 0 ? (
-          <p className="px-5 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">No warehouses yet. Create one above.</p>
+          <p className="px-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No warehouses yet. Create one above.</p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Code</th>
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Name</th>
-                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
+          <div className="table-wrapper">
+            <table className="table table-sticky table-row-hover w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="table-th">Code</th>
+                  <th className="table-th">Name</th>
+                  <th className="table-th">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
               {warehouses.map((w) => (
-                <tr key={w.id} className="transition-colors hover:bg-zinc-50/50 dark:hover:bg-zinc-700/50">
-                  <td className="px-5 py-3.5">
+                <tr key={w.id}>
+                  <td className="table-td">
                     {editingId === w.id ? (
-                      <input type="text" value={editCode} onChange={(e) => setEditCode(e.target.value)} className="max-w-[120px] rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                      <input type="text" value={editCode} onChange={(e) => setEditCode(e.target.value)} className="max-w-[120px] rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" />
                     ) : (
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">{w.code}</span>
+                      <span className="font-medium text-slate-900 dark:text-slate-100">{w.code}</span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="table-td">
                     {editingId === w.id ? (
-                      <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="max-w-xs rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100" />
+                      <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="max-w-xs rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" />
                     ) : (
-                      <span className="text-zinc-700 dark:text-zinc-300">{w.name}</span>
+                      <span className="text-slate-700 dark:text-slate-300">{w.name}</span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5">
+                  <td className="table-td">
                     {editingId === w.id ? (
                       <div className="flex gap-2">
-                        <button type="button" onClick={handleSaveEdit} disabled={saving} className={btnPrimary}>
+                        <button type="button" onClick={handleSaveEdit} disabled={saving} className="btn btn-primary">
                           Save
                         </button>
-                        <button type="button" onClick={() => setEditingId(null)} className={btnSecondary}>
+                        <button type="button" onClick={() => setEditingId(null)} className="btn btn-secondary text-xs">
                           Cancel
                         </button>
                       </div>
                     ) : (
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => startEdit(w)} className={btnSecondary}>
+                        <button type="button" onClick={() => startEdit(w)} className="btn btn-secondary text-xs">
                           Edit
                         </button>
-                        <button type="button" onClick={() => setDeleteTarget({ id: w.id, name: w.name })} className={btnDanger}>
+                        <button type="button" onClick={() => setDeleteTarget({ id: w.id, name: w.name })} className="btn btn-danger text-xs">
                           Delete
                         </button>
                       </div>
@@ -196,8 +190,9 @@ export function AdminWarehouses() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

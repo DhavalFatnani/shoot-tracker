@@ -89,6 +89,7 @@ export const tasks = pgTable("tasks", {
   dispatchPendingAction: integer("dispatch_pending_action"),
   /** Locked at OPS dispatch: Packed (PACKED + PICKED) count */
   dispatchPacked: integer("dispatch_packed"),
+  /** User who created the task. Soft reference (no FK) to allow historical records if profile is removed. */
   createdBy: uuid("created_by").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -202,6 +203,8 @@ export const disputes = pgTable("disputes", {
   status: disputeStatusEnum("status").notNull().default("OPEN"),
   resolutionComment: varchar("resolution_comment", { length: 2048 }),
   resolutionPhotoUrl: varchar("resolution_photo_url", { length: 1024 }),
+  raisedBy: uuid("raised_by").references(() => profiles.id),
+  /** User who resolved the dispute. Soft reference (no FK) to allow historical records if profile is removed. */
   resolvedBy: uuid("resolved_by"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

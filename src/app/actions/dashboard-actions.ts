@@ -5,8 +5,11 @@ import { getDb } from "@/lib/db/client";
 import * as taskRepo from "@/lib/repositories/task-repository";
 import * as taskSerialRepo from "@/lib/repositories/task-serial-repository";
 import * as disputeRepo from "@/lib/repositories/dispute-repository";
-import { getBufferAgingList } from "@/lib/services/buffer-aging-service";
-
+import { countBufferForKpis } from "@/lib/services/buffer-aging-service";
+import {
+  getDashboardRecentActivity as getDashboardRecentActivityService,
+  type DashboardActivityItem,
+} from "@/lib/services/dashboard-activity-service";
 export type DashboardKpis = {
   pickingPending: number;
   packed: number;
@@ -40,21 +43,17 @@ export async function getDashboardKpis(): Promise<{ success: true; data: Dashboa
   ]);
 
   const taskIds = allTasks.map((t) => t.id);
-  const [openDisputes, pendingAction] = await Promise.all([
+  const [openDisputes, pendingAction, bufferCount] = await Promise.all([
     disputeRepo.countOpenDisputesForTaskIds(db, taskIds),
     taskSerialRepo.countRequestedSerialsForTaskIds(db, taskIds),
+    session.role === "SHOOT_USER" || session.role === "ADMIN"
+      ? countBufferForKpis({
+          role: session.role,
+          shootTeamIds: session.shootTeamIds,
+          opsWarehouseIds: session.opsWarehouseIds,
+        })
+      : Promise.resolve(0),
   ]);
-
-  let bufferCount = 0;
-  if (session.role === "SHOOT_USER" || session.role === "ADMIN") {
-    const buffer = await getBufferAgingList({
-      role: session.role,
-      shootTeamIds: session.shootTeamIds,
-      opsWarehouseIds: session.opsWarehouseIds,
-      limit: 500,
-    });
-    bufferCount = buffer.items?.length ?? 0;
-  }
 
   return {
     success: true,
@@ -73,4 +72,28 @@ export async function getOpenDisputesCount(): Promise<{ success: true; count: nu
   const result = await getDashboardKpis();
   if (!result.success) return { success: false, error: result.error };
   return { success: true, count: result.data.openDisputes };
+}
+
+export type { DashboardActivityItem };
+
+export async function getDashboardRecentActivity(
+  limit: number = 10
+): Promise<{ success: true; data: DashboardActivityItem[] } | { success: false; error: string }> {
+  const session = await getSession();
+  if (!session) return { success: false, error: "Unauthorized" };
+
+  try {
+    const data = await getDashboardRecentActivityService(
+      session.role,
+      session.shootTeamIds,
+      session.opsWarehouseIds,
+      limit
+    );
+    return { success: true, data };
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to load recent activity",
+    };
+  }
 }

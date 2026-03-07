@@ -1,4 +1,4 @@
-import { eq, desc, and, or, inArray, isNotNull } from "drizzle-orm";
+import { eq, desc, and, or, inArray, isNotNull, sql } from "drizzle-orm";
 import type { Database, Tx } from "@/lib/db/client";
 import { returns, sessions, sessionItems, tasks, serialRegistry, taskSerials } from "@/lib/db/schema";
 
@@ -30,27 +30,39 @@ export type ListReturnsOptions = {
 export async function listReturns(db: Database, options: ListReturnsOptions) {
   const { createdBy, shootTeamIds, limit, offset } = options;
 
-  let returnIds: string[] = [];
+  const hasCreator = createdBy !== undefined;
+  const hasTeam = shootTeamIds !== undefined && shootTeamIds.length > 0;
 
-  if (createdBy !== undefined) {
+  let returnIds: string[] = [];
+  if (hasCreator && hasTeam) {
+    const [byCreator, byTeam] = await Promise.all([
+      db.select({ id: returns.id }).from(returns).where(eq(returns.createdBy, createdBy!)),
+      db
+        .selectDistinct({ returnId: sessions.returnId })
+        .from(sessions)
+        .innerJoin(tasks, eq(sessions.taskId, tasks.id))
+        .where(and(isNotNull(sessions.returnId), inArray(tasks.shootTeamId, shootTeamIds))),
+    ]);
+    returnIds = [
+      ...byCreator.map((r) => r.id),
+      ...byTeam.map((r) => r.returnId).filter((id): id is string => id != null),
+    ];
+  } else if (hasCreator) {
     const byCreator = await db
       .select({ id: returns.id })
       .from(returns)
       .where(eq(returns.createdBy, createdBy));
-    returnIds.push(...byCreator.map((r) => r.id));
-  }
-
-  if (shootTeamIds !== undefined && shootTeamIds.length > 0) {
+    returnIds = byCreator.map((r) => r.id);
+  } else if (hasTeam) {
     const byTeam = await db
       .selectDistinct({ returnId: sessions.returnId })
       .from(sessions)
       .innerJoin(tasks, eq(sessions.taskId, tasks.id))
       .where(and(isNotNull(sessions.returnId), inArray(tasks.shootTeamId, shootTeamIds)));
-    const ids = byTeam.map((r) => r.returnId).filter((id): id is string => id != null);
-    returnIds.push(...ids);
+    returnIds = byTeam.map((r) => r.returnId).filter((id): id is string => id != null);
   }
 
-  if (returnIds.length === 0 && (createdBy !== undefined || (shootTeamIds?.length ?? 0) > 0)) {
+  if (returnIds.length === 0 && (hasCreator || hasTeam)) {
     return [];
   }
 
@@ -143,17 +155,18 @@ export async function listReturnsWithSummary(db: Database, options: ListReturnsO
     pairs.map((p) => ({ returnId, taskId: p.taskId, serialId: p.serialId }))
   );
   if (allPairs.length > 0) {
-    const conditions = allPairs.map((p) =>
-      and(
-        eq(taskSerials.taskId, p.taskId),
-        eq(taskSerials.serialId, p.serialId),
-        eq(taskSerials.status, "RETURNED")
-      )
-    );
     const returned = await db
       .select({ taskId: taskSerials.taskId, serialId: taskSerials.serialId })
       .from(taskSerials)
-      .where(or(...conditions));
+      .where(
+        and(
+          eq(taskSerials.status, "RETURNED"),
+          sql`(${taskSerials.taskId}, ${taskSerials.serialId}) IN (${sql.join(
+            allPairs.map((p) => sql`(${p.taskId}, ${p.serialId})`),
+            sql`, `
+          )})`
+        )
+      );
     const returnedSet = new Set(returned.map((r) => `${r.taskId}:${r.serialId}`));
     for (const [returnId, pairs] of pairsByReturn) {
       const count = pairs.filter((p) => returnedSet.has(`${p.taskId}:${p.serialId}`)).length;
@@ -306,6 +319,13 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     serialsWithMeta = serialsWithMeta.map((row) => ({ ...row, sku: skuBySerial.get(row.serialId) ?? null }));
   }
 
+  const deduped = new Map<string, typeof serialsWithMeta[number]>();
+  for (const s of serialsWithMeta) {
+    const key = `${s.serialId}-${s.taskId}`;
+    if (!deduped.has(key)) deduped.set(key, s);
+  }
+  const uniqueSerials = Array.from(deduped.values());
+
   return {
     id: r.id,
     serial: r.serial,
@@ -315,9 +335,9 @@ export async function getReturnWithSessions(db: Database, returnId: string): Pro
     dispatchedAt: r.dispatchedAt ?? null,
     closedAt: r.closedAt ?? null,
     sessions: sessionsList,
-    totalSerials,
+    totalSerials: uniqueSerials.length,
     verifiedCount,
-    serials: serialsWithMeta,
+    serials: uniqueSerials,
     involvedShootTeamIds,
   };
 }

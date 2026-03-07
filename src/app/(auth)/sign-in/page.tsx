@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SignInForm } from "./sign-in-form";
+import { SignInContactAdmin } from "./sign-in-contact-admin";
+import { LogoMark } from "@/components/logo";
 
 export default async function SignInPage({
   searchParams,
@@ -28,42 +30,47 @@ export default async function SignInPage({
   }
 
   return (
-    <div className="w-full max-w-md">
-      <div className="rounded-2xl border border-zinc-200/80 bg-white/90 p-8 shadow-xl shadow-zinc-200/20 backdrop-blur-md dark:border-zinc-700/80 dark:bg-zinc-900/90 sm:p-10">
-        <div className="mb-8 text-center">
-          <Link
-            href="/"
-            className="inline-block text-2xl font-semibold tracking-tight text-zinc-900 transition duration-200 hover:text-teal-600 dark:text-zinc-100 dark:hover:text-teal-400"
-          >
-            ShootTrack
-          </Link>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            Sign in to your account to continue
-          </p>
-        </div>
+    <div className="flex w-full max-w-md flex-col items-center">
+      {/* Header: logo + welcome */}
+      <div className="mb-8 flex flex-col items-center text-center">
+        <Link href="/" className="flex flex-col items-center gap-4">
+          <LogoMark size="lg" className="rounded-full bg-[#5B21B6] shadow-lg shadow-violet-900/30 ring-0" />
+          <span className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            Welcome back
+          </span>
+        </Link>
+        <p className="mt-1 text-slate-400">
+          Sign in to continue to ShootTrack
+        </p>
+      </div>
+
+      {/* Form card */}
+      <div
+        className="w-full rounded-2xl p-8 shadow-xl sm:p-10"
+        style={{ backgroundColor: "#252538" }}
+      >
         {message && (
-          <div className="mb-4 rounded-lg bg-teal-50 px-3.5 py-2.5 text-sm text-teal-800 dark:bg-teal-900/30 dark:text-teal-200" role="status">
+          <div className="mb-4 rounded-xl bg-indigo-500/20 px-4 py-3 text-sm font-medium text-indigo-200" role="status">
             {String(message).replace(/\+/g, " ")}
           </div>
         )}
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-800 dark:bg-red-900/30 dark:text-red-200" role="alert">
+          <div className="mb-4 rounded-xl bg-red-500/20 px-4 py-3 text-sm font-medium text-red-200" role="alert">
             {error}
           </div>
         )}
         <SignInForm />
-        <p className="mt-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Contact your admin if you don&apos;t have an account.
+        <p className="mt-4 text-center text-xs text-slate-500">
+          If your browser shows a &quot;password found in breach&quot; warning, it&apos;s from your browser (e.g. Google Password Manager) checking your password against public breach lists—not ShootTrack. Use a unique, strong password for this account.
         </p>
       </div>
-      <p className="mt-6 text-center">
-        <Link
-          href="/"
-          className="text-sm text-zinc-500 transition duration-200 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-        >
-          &larr; Back to home
-        </Link>
-      </p>
+
+      <SignInContactAdmin />
+      <div className="mt-6 text-slate-500" aria-hidden>
+        <svg className="mx-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+      </div>
     </div>
   );
 }

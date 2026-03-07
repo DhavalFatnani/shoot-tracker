@@ -17,7 +17,9 @@ Production-grade, role-based, event-sourced serialized shoot inventory movement 
 
 3. **Migrations**: `npm run db:push` or `npm run db:migrate` to apply the Drizzle schema and RLS/trigger migrations.
 
-4. **Development server**:
+4. **Supabase Storage**: For dispute resolution photos, create the `dispute-photos` bucket in the Supabase Dashboard (Storage → New bucket). See [docs/SUPABASE-STORAGE.md](docs/SUPABASE-STORAGE.md).
+
+5. **Development server**:
 
 ```bash
 npm run dev
@@ -31,7 +33,7 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000). Sign up/sign in with Supabase Auth; profile and role are created via DB trigger or on first load.
 
-5. **Tests**: `npm run test:run` (Vitest unit). `npm run test:e2e` (Playwright; starts dev server).
+6. **Tests**: `npm run test:run` (Vitest unit). `npm run test:e2e` (Playwright; starts dev server).
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 

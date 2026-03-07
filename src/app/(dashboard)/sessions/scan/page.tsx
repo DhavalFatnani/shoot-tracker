@@ -16,13 +16,20 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
   const session = await getSession();
   if (!session) return null;
 
-  const task = taskId ? await taskById(getDb(), taskId) : null;
   const isReturnVerify = type === "RETURN_VERIFY";
-  const nonReturnableResult = taskId && isReturnVerify ? await getNonReturnableSerialsForTask(taskId) : null;
-  const nonReturnableSerialIds = nonReturnableResult?.success && nonReturnableResult.data ? nonReturnableResult.data : [];
 
+  let task: Awaited<ReturnType<typeof taskById>> | null = null;
+  let nonReturnableSerialIds: string[] = [];
   let tasksForPicker: { id: string; name: string | null; status: string; serial: number }[] = [];
-  if (!taskId) {
+
+  if (taskId) {
+    const [taskResult, nonReturnableResult] = await Promise.all([
+      taskById(getDb(), taskId),
+      isReturnVerify ? getNonReturnableSerialsForTask(taskId) : Promise.resolve(null),
+    ]);
+    task = taskResult;
+    nonReturnableSerialIds = nonReturnableResult?.success && nonReturnableResult.data ? nonReturnableResult.data : [];
+  } else {
     const formData = new FormData();
     formData.set("limit", "50");
     const result = await listTasks(formData);
@@ -44,31 +51,31 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
     <div className="space-y-6">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { href: "/tasks", label: "Tasks" }, { label: task ? `${task.name ?? formatTaskSerial(task.serial)}` : "Scan session" }]} />
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900">Scan session</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Scan session</h1>
         {task ? (
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Task {formatTaskSerial(task.serial)} &middot; {getTaskStatusLabel(task.status)}
           </p>
         ) : !taskId && tasksForPicker.length > 0 ? (
-          <p className="mt-1 text-sm text-zinc-500">Select a task to start a scan session.</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Select a task to start a scan session.</p>
         ) : !taskId ? (
-          <p className="mt-1 text-sm text-zinc-500">No tasks available. Create a task first or open one from the Tasks list.</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">No tasks available. Create a task first or open one from the Tasks list.</p>
         ) : null}
       </div>
 
       {!taskId && tasksForPicker.length > 0 && (
-        <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
-          <div className="border-b border-zinc-100 px-5 py-3">
-            <h2 className="text-sm font-semibold text-zinc-900">Choose a task</h2>
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <div className="border-b border-slate-100 px-5 py-3 dark:border-slate-700">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Choose a task</h2>
           </div>
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-700">
             {tasksForPicker.map((t) => (
               <li key={t.id}>
                 <Link
                   href={`/sessions/scan?taskId=${t.id}`}
-                  className="flex items-center justify-between px-5 py-3 text-left transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                  className="flex items-center justify-between px-5 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">{t.name ?? formatTaskSerial(t.serial)}</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{t.name ?? formatTaskSerial(t.serial)}</span>
                   <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getTaskStatusClass(t.status)}`}>
                     {getTaskStatusLabel(t.status)}
                   </span>
@@ -94,7 +101,14 @@ export default async function ScanSessionPage({ searchParams }: { searchParams: 
         </div>
       )}
       {taskId && task && !taskClosed && (
-        <ScanSessionUI taskId={taskId} userRole={session.role} defaultSessionType={defaultSessionType} nonReturnableSerialIds={nonReturnableSerialIds} />
+        <ScanSessionUI
+          taskId={taskId}
+          userRole={session.role}
+          defaultSessionType={defaultSessionType}
+          nonReturnableSerialIds={nonReturnableSerialIds}
+          taskDisplayName={task.name ?? formatTaskSerial(task.serial)}
+          taskSerial={formatTaskSerial(task.serial)}
+        />
       )}
     </div>
   );

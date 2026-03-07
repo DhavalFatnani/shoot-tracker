@@ -12,17 +12,21 @@ function mapError(e: unknown): string {
   return "An error occurred";
 }
 
-export async function getShootInventory() {
+export async function getShootInventory(formData?: FormData) {
   const session = await getSession();
   if (!session) return { success: false, error: "Unauthorized" };
   if (session.role === "OPS_USER") {
     return { success: false, error: "OPS users cannot access shoot team inventory" };
   }
 
+  const taskId = formData?.get("taskId");
+  const taskIdStr = typeof taskId === "string" && taskId.trim() ? taskId.trim() : undefined;
+
   try {
     const data = await returnService.getShootTeamInventory(
       session.role,
-      session.shootTeamIds
+      session.shootTeamIds,
+      taskIdStr ?? null
     );
     return { success: true, data };
   } catch (e) {

@@ -1,7 +1,35 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type { Role } from "@/lib/validations";
 import type { Database, Tx } from "@/lib/db/client";
 import { profiles, teams, teamMembers } from "@/lib/db/schema";
+
+/** Batch fetch id, firstName, lastName for display names. Returns map userId -> displayName (e.g. "J. Miller"). */
+export async function getDisplayNamesByIds(
+  db: Database | Tx,
+  userIds: string[]
+): Promise<Map<string, string>> {
+  if (userIds.length === 0) return new Map();
+  const uniq = [...new Set(userIds)];
+  const rows = await db
+    .select({ id: profiles.id, firstName: profiles.firstName, lastName: profiles.lastName })
+    .from(profiles)
+    .where(inArray(profiles.id, uniq));
+  const map = new Map<string, string>();
+  for (const r of rows) {
+    map.set(r.id, formatDisplayName(r.firstName, r.lastName));
+  }
+  for (const id of uniq) {
+    if (!map.has(id)) map.set(id, "—");
+  }
+  return map;
+}
+
+export function formatDisplayName(firstName: string | null, lastName: string | null): string {
+  if (firstName && lastName) return `${firstName.charAt(0)}. ${lastName}`;
+  if (firstName) return firstName;
+  if (lastName) return lastName;
+  return "—";
+}
 
 export async function profileById(db: Database | Tx, userId: string) {
   const rows = await db.select().from(profiles).where(eq(profiles.id, userId)).limit(1);

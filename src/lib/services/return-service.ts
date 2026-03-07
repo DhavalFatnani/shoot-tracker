@@ -183,28 +183,27 @@ export async function createReturn(
           serialId,
           eventType: "RETURN_TO_BUFFER" as const,
           fromLocation: "SHOOT_ACTIVE" as const,
-          toLocation: "SHOOT_ACTIVE" as const,
+          toLocation: "SHOOT_BUFFER" as const,
           taskId,
           sessionId,
           createdBy: userId,
         }))
       );
 
-      // Return created: serials stay at SHOOT_ACTIVE until shoot team does "Return dispatch"
       const returnCreatedLocation = getLocationForTaskSerialStatus("RETURN_CREATED");
       const returnedSet = new Set(serials);
-      for (const serialId of serials) {
-        await tx
-          .update(taskSerials)
-          .set({ status: "RETURN_CREATED" })
-          .where(and(eq(taskSerials.taskId, taskId), eq(taskSerials.serialId, serialId)));
-        if (returnCreatedLocation) await serialStateRepo.upsertLocation(tx, serialId, returnCreatedLocation);
-      }
 
-      // Serials from this task that are RECEIVED but not in this return stay with shoot → SHOOT_BUFFER (subject to future returns)
-      const leftBehind = inventory.filter((i) => i.taskId === taskId && !returnedSet.has(i.serialId));
-      for (const i of leftBehind) {
-        await serialStateRepo.upsertLocation(tx, i.serialId, "SHOOT_BUFFER");
+      await tx
+        .update(taskSerials)
+        .set({ status: "RETURN_CREATED" })
+        .where(and(eq(taskSerials.taskId, taskId), inArray(taskSerials.serialId, serials)));
+      if (returnCreatedLocation) await serialStateRepo.upsertLocations(tx, serials, returnCreatedLocation);
+
+      const leftBehindIds = inventory
+        .filter((i) => i.taskId === taskId && !returnedSet.has(i.serialId))
+        .map((i) => i.serialId);
+      if (leftBehindIds.length > 0) {
+        await serialStateRepo.upsertLocations(tx, leftBehindIds, "SHOOT_BUFFER");
       }
 
       summary.push({ taskId, taskName: item.taskName, taskSerial: item.taskSerial, count: serials.length, sessionId });
@@ -252,15 +251,19 @@ export async function dispatchReturn(returnId: string, userId: string, userRole:
   await db.transaction(async (tx) => {
     await tx.update(returns).set({ dispatchedAt: new Date() }).where(eq(returns.id, returnId));
 
-    for (const item of items) {
-      const taskId = taskIdBySession.get(item.sessionId);
-      if (!taskId) continue;
+    const validItems = items.filter((i) => taskIdBySession.has(i.sessionId));
+    if (validItems.length > 0) {
+      const pairConditions = validItems.map((item) => {
+        const taskId = taskIdBySession.get(item.sessionId)!;
+        return sql`(${taskSerials.taskId} = ${taskId} AND ${taskSerials.serialId} = ${item.serialId})`;
+      });
       await tx
         .update(taskSerials)
         .set({ status: "RETURN_IN_TRANSIT" })
-        .where(and(eq(taskSerials.taskId, taskId), eq(taskSerials.serialId, item.serialId)));
+        .where(sql`${sql.join(pairConditions, sql` OR `)}`);
+
       if (transitLocation) {
-        await serialStateRepo.upsertLocation(tx, item.serialId, transitLocation);
+        await serialStateRepo.upsertLocations(tx, validItems.map((i) => i.serialId), transitLocation);
       }
     }
   });
@@ -298,18 +301,17 @@ export async function closeReturnIfFullyVerified(
     .filter((p): p is { taskId: string; serialId: string } => p.taskId != null);
   if (pairs.length === 0) return false;
 
-  let allReturned = true;
-  for (const { taskId, serialId } of pairs) {
-    const rows = await tx
-      .select({ status: taskSerials.status })
-      .from(taskSerials)
-      .where(and(eq(taskSerials.taskId, taskId), eq(taskSerials.serialId, serialId)))
-      .limit(1);
-    if (rows[0]?.status !== "RETURNED") {
-      allReturned = false;
-      break;
-    }
-  }
+  const pairConditions = pairs.map(
+    ({ taskId, serialId }) =>
+      sql`(${taskSerials.taskId} = ${taskId} AND ${taskSerials.serialId} = ${serialId})`
+  );
+  const matchingRows = await tx
+    .select({ status: taskSerials.status })
+    .from(taskSerials)
+    .where(sql`${sql.join(pairConditions, sql` OR `)}`);
+  const allReturned =
+    matchingRows.length === pairs.length &&
+    matchingRows.every((r) => r.status === "RETURNED");
   if (!allReturned) return false;
 
   await tx.update(returns).set({ closedAt: new Date() }).where(eq(returns.id, returnId));

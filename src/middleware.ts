@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Middleware: refresh Supabase session cookies without blocking the request.
+ * Auth is enforced in dashboard layout via getSession(); skipping await getUser()
+ * here avoids a second slow Supabase round-trip and cuts dashboard TTFB by ~10–15s.
+ */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -21,7 +26,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  // Refresh session in background; do not await so dashboard loads immediately.
+  void supabase.auth.getUser();
 
   return response;
 }

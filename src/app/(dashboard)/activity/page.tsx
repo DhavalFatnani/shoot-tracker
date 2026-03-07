@@ -22,8 +22,8 @@ export default async function ActivityLogsPage({
     return (
       <div className="space-y-6">
         <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Activity" }]} />
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
-          <h2 className="text-lg font-semibold text-amber-800 dark:text-amber-200">Access restricted</h2>
+        <div className="section-card rounded-2xl border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
+          <h2 className="font-display text-lg font-semibold text-amber-800 dark:text-amber-200">Access restricted</h2>
           <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
             Activity logs are only available to admins. Use the task detail page to view activity for your tasks.
           </p>
@@ -52,59 +52,61 @@ export default async function ActivityLogsPage({
     <div className="space-y-6">
       <Breadcrumbs items={[{ href: "/dashboard", label: "Dashboard" }, { label: "Activity" }]} />
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Activity logs
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <h1 className="page-title">Activity logs</h1>
+        <p className="page-subtitle mt-1">
           Recent events across all tasks: picks, receipts, returns, sold, and more.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50/75 dark:border-zinc-600 dark:bg-zinc-700/50">
+      <div className="table-wrapper">
+        <table className="table table-sticky table-row-hover">
+          <thead>
             <tr>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Time</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Event</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Task</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">Serial</th>
-              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-300">From → To</th>
+              <th className="table-th">Time</th>
+              <th className="table-th">Event</th>
+              <th className="table-th">Task</th>
+              <th className="table-th">Serial</th>
+              <th className="table-th">From → To</th>
+              <th className="table-th">Actor</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-600">
+          <tbody>
             {list.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-zinc-500 dark:text-zinc-400">
+                <td colSpan={6} className="table-td py-10 text-center">
                   No activity yet.
                 </td>
               </tr>
             )}
             {list.map((row) => (
               <ClickableTableRow key={row.id} href={`/tasks/${row.taskId}`}>
-                <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-300 whitespace-nowrap">
+                <td className="table-td whitespace-nowrap">
                   {formatDateTimeIST(row.createdAt)}
                 </td>
-                <td className="px-5 py-3.5">
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getEventColor(row.eventType)}`}>
+                <td className="table-td">
+                  <span className={`badge ${getEventColor(row.eventType)}`}>
                     {getEventLabel(row.eventType)}
                   </span>
                 </td>
-                <td className="px-5 py-3.5">
+                <td className="table-td">
                   <LinkWithStopPropagation
                     href={`/tasks/${row.taskId}`}
-                    className="font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300"
+                    className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                   >
                     {row.taskName ?? formatTaskSerial(row.taskSerial)}
                   </LinkWithStopPropagation>
-                  <span className="ml-1 text-xs text-zinc-400 dark:text-zinc-500">
+                  <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">
                     {formatTaskSerial(row.taskSerial)}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 font-mono text-zinc-700 dark:text-zinc-300 text-xs">
+                <td className="table-td font-mono text-xs">
                   {row.serialId}
                 </td>
-                <td className="px-5 py-3.5 text-zinc-600 dark:text-zinc-400 text-xs">
+                <td className="table-td text-xs text-slate-500 dark:text-slate-400">
                   {row.fromLocation} → {row.toLocation}
+                </td>
+                <td className="table-td text-sm text-slate-600 dark:text-slate-300">
+                  {row.actorDisplayName}
                 </td>
               </ClickableTableRow>
             ))}
@@ -113,24 +115,24 @@ export default async function ActivityLogsPage({
       </div>
 
       {(page > 1 || hasNext) && (
-        <nav className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-700" aria-label="Pagination">
+        <nav className="flex items-center justify-between border-t border-slate-200 pt-4 dark:border-slate-700" aria-label="Pagination">
           <div>
             {page > 1 ? (
-              <Link href={`/activity?page=${page - 1}`} className="text-sm font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400">
+              <Link href={`/activity?page=${page - 1}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
                 ← Previous
               </Link>
             ) : (
-              <span className="text-sm text-zinc-400 dark:text-zinc-500">Previous</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">Previous</span>
             )}
           </div>
-          <div className="text-sm text-zinc-500 dark:text-zinc-400">Page {page}</div>
+          <div className="text-sm text-slate-500 dark:text-slate-400">Page {page}</div>
           <div>
             {hasNext ? (
-              <Link href={`/activity?page=${page + 1}`} className="text-sm font-medium text-teal-600 hover:text-teal-700 dark:text-teal-400">
+              <Link href={`/activity?page=${page + 1}`} className="text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400">
                 Next →
               </Link>
             ) : (
-              <span className="text-sm text-zinc-400 dark:text-zinc-500">Next</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">Next</span>
             )}
           </div>
         </nav>
