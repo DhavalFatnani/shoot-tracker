@@ -270,7 +270,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   <th className="table-th">MODEL / DESCRIPTION</th>
                   <th className="table-th">STATUS</th>
                   <th className="table-th">RETURN</th>
-                  {(session.role === "ADMIN" || session.role === "OPS_USER") && (
+                  {task.status !== "CLOSED" && (
                     <th className="table-th text-right">ACTIONS</th>
                   )}
                 </tr>
@@ -317,7 +317,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                         </span>
                       )}
                     </td>
-                    {(session.role === "ADMIN" || session.role === "OPS_USER") && (
+                    {task.status !== "CLOSED" && (
                       <td className="table-td text-right">
                         <SerialRowActions serial={ts} taskId={task.id} userRole={session.role} taskStatus={task.status} />
                       </td>

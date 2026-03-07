@@ -145,12 +145,14 @@ export function SerialRowActions({
 
   const isAdmin = userRole === "ADMIN";
   const isOpsOrAdmin = userRole === "OPS_USER" || isAdmin;
+  const isShoot = userRole === "SHOOT_USER";
   const actionableStatus = serial.status === "REQUESTED" || serial.status === "PACKED" || serial.status === "PICKED";
   const disputeOnlyStatus = serial.status === "IN_TRANSIT" || serial.status === "RECEIVED";
   const revertableStatus = !actionableStatus && serial.status !== "REQUESTED";
 
-  if (!isOpsOrAdmin) return null;
-  if (!actionableStatus && !disputeOnlyStatus && !(isAdmin && revertableStatus)) return null;
+  if (!isOpsOrAdmin && !isShoot) return null;
+  if (isShoot && !actionableStatus && !disputeOnlyStatus) return null;
+  if (isOpsOrAdmin && !actionableStatus && !disputeOnlyStatus && !(isAdmin && revertableStatus)) return null;
 
   const handleRevert = () => {
     setError(null);
@@ -199,10 +201,10 @@ export function SerialRowActions({
     return (
       <div className="flex flex-col gap-1.5">
         <button onClick={handleRevert} disabled={pending}
-          className="rounded-md bg-purple-100 px-2.5 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-200 disabled:opacity-50">
+          className="rounded-md bg-purple-100 px-2.5 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-200 disabled:opacity-50 dark:bg-purple-900/40 dark:text-purple-300 dark:hover:bg-purple-900/60">
           Revert to Requested
         </button>
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       </div>
     );
   }

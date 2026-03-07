@@ -33,6 +33,8 @@ export function CreateRequestForm({
   const [shootReason, setShootReason] = useState<ShootReason>("INHOUSE_SHOOT");
   const [nonReturnIds, setNonReturnIds] = useState<Set<string>>(new Set());
   const [nonReturnReasons, setNonReturnReasons] = useState<Record<string, string>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkReason, setBulkReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -62,17 +64,52 @@ export function CreateRequestForm({
     }
   }
 
-  function toggleNonReturn(serialId: string) {
+  function toggleSelected(serialId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(serialId)) next.delete(serialId);
+      else next.add(serialId);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(allIds: string[]) {
+    setSelectedIds((prev) => {
+      if (prev.size === allIds.length) return new Set();
+      return new Set(allIds);
+    });
+  }
+
+  function handleBulkMarkNonReturnable() {
+    if (selectedIds.size === 0 || !bulkReason.trim()) return;
     setNonReturnIds((prev) => {
       const next = new Set(prev);
-      if (next.has(serialId)) {
-        next.delete(serialId);
-        setNonReturnReasons((r) => { const copy = { ...r }; delete copy[serialId]; return copy; });
-      } else {
-        next.add(serialId);
+      for (const id of selectedIds) next.add(id);
+      return next;
+    });
+    setNonReturnReasons((prev) => {
+      const next = { ...prev };
+      for (const id of selectedIds) next[id] = bulkReason.trim();
+      return next;
+    });
+    setSelectedIds(new Set());
+    setBulkReason("");
+  }
+
+  function handleBulkClearNonReturnable() {
+    setNonReturnIds((prev) => {
+      const next = new Set(prev);
+      for (const id of selectedIds) {
+        next.delete(id);
       }
       return next;
     });
+    setNonReturnReasons((prev) => {
+      const next = { ...prev };
+      for (const id of selectedIds) delete next[id];
+      return next;
+    });
+    setSelectedIds(new Set());
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -257,57 +294,114 @@ export function CreateRequestForm({
         </div>
       )}
 
-      {/* Serial preview with return toggle */}
+      {/* Serial preview with selection-based bulk non-returnable */}
       {currentRows.length > 0 && (
-        <div className="table-wrapper max-h-72 overflow-auto">
-          <table className="table table-sticky table-row-hover w-full text-left text-sm">
-            <thead>
-              <tr>
-                <th className="table-th">Serial</th>
-                <th className="table-th">SKU</th>
-                <th className="table-th text-center">Return</th>
-                <th className="table-th">Non-return reason</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="section-card">
+          {/* Bulk action bar */}
+          <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-3 dark:border-slate-700">
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {currentRows.length} serial{currentRows.length !== 1 ? "s" : ""}
+              {nonReturnIds.size > 0 && (
+                <span className="ml-2 text-xs font-normal text-amber-600 dark:text-amber-400">
+                  ({nonReturnIds.size} non-returnable)
+                </span>
+              )}
+            </p>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              {selectedIds.size > 0 && (
+                <>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {selectedIds.size} selected
+                  </span>
+                  {[...selectedIds].some((id) => nonReturnIds.has(id)) && (
+                    <button
+                      type="button"
+                      onClick={handleBulkClearNonReturnable}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    >
+                      Mark returnable
+                    </button>
+                  )}
+                  <input
+                    type="text"
+                    value={bulkReason}
+                    onChange={(e) => setBulkReason(e.target.value)}
+                    placeholder="Reason (e.g. Gifted)"
+                    className="input w-44 px-2.5 py-1.5 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleBulkMarkNonReturnable}
+                    disabled={!bulkReason.trim()}
+                    className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-amber-600 disabled:opacity-50 dark:bg-amber-600 dark:hover:bg-amber-500"
+                  >
+                    Mark non-returnable
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Scrollable table */}
+          <div className="max-h-80 overflow-y-auto">
+            <table className="table table-sticky table-row-hover w-full text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="table-th w-10">
+                    <input
+                      type="checkbox"
+                      checked={currentRows.length > 0 && selectedIds.size === currentRows.slice(0, 100).length}
+                      onChange={() => toggleSelectAll(currentRows.slice(0, 100).map((r) => r.serial_id))}
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                    />
+                  </th>
+                  <th className="table-th">Serial</th>
+                  <th className="table-th">SKU</th>
+                  <th className="table-th">Status</th>
+                  <th className="table-th">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
                 {currentRows.slice(0, 100).map((r) => {
                   const isNonReturn = nonReturnIds.has(r.serial_id);
+                  const isSelected = selectedIds.has(r.serial_id);
                   return (
-                    <tr key={r.serial_id} className={isNonReturn ? "bg-amber-50/50 dark:bg-amber-900/10" : ""}>
+                    <tr
+                      key={r.serial_id}
+                      className={`cursor-pointer ${isNonReturn ? "bg-amber-50/50 dark:bg-amber-900/10" : ""} ${isSelected ? "bg-indigo-50/60 dark:bg-indigo-900/15" : ""}`}
+                      onClick={() => toggleSelected(r.serial_id)}
+                    >
+                      <td className="table-td" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelected(r.serial_id)}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                        />
+                      </td>
                       <td className="table-td font-mono text-xs">{r.serial_id}</td>
                       <td className="table-td">{r.sku}</td>
-                      <td className="table-td text-center">
-                        <button
-                          type="button"
-                          onClick={() => toggleNonReturn(r.serial_id)}
-                          className={`inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                            !isNonReturn ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"
-                          }`}
-                        >
-                          <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform ${
-                            !isNonReturn ? "translate-x-4" : "translate-x-0.5"
-                          }`} />
-                        </button>
-                      </td>
                       <td className="table-td">
-                        {isNonReturn && (
-                          <input
-                            type="text"
-                            value={nonReturnReasons[r.serial_id] ?? ""}
-                            onChange={(e) => setNonReturnReasons((prev) => ({ ...prev, [r.serial_id]: e.target.value }))}
-                            placeholder="e.g. Gifted to influencer"
-                            className="input w-full px-2.5 py-1 text-xs"
-                          />
+                        {isNonReturn ? (
+                          <span className="badge bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">Non-returnable</span>
+                        ) : (
+                          <span className="badge bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">Returnable</span>
                         )}
+                      </td>
+                      <td className="table-td text-xs text-slate-500 dark:text-slate-400">
+                        {isNonReturn ? (nonReturnReasons[r.serial_id] ?? "—") : "—"}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-            {currentRows.length > 100 && (
-              <p className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">… and {currentRows.length - 100} more</p>
-            )}
+          </div>
+          {currentRows.length > 100 && (
+            <p className="border-t border-slate-200 px-4 py-2 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+              … and {currentRows.length - 100} more
+            </p>
+          )}
         </div>
       )}
 
